@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base Metals Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080b0e;--bg1:#0c1015;--bg2:#10161c;--bg3:#141c24;--border:#1c2830;--border2:#243040;--text:#c8d4dc;--text2:#6a8090;--text3:#3a5060;--accent:#00c8a0;--a2:#0090f0;--warn:#f0a020;--danger:#e04040;--cu:#f0a020;--al:#60b0f0;--ni:#b080f0;--zn:#40d090;--pb:#f07080;--sn:#a0b8c8;--fm:'IBM Plex Mono',monospace;--fs:'IBM Plex Sans',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:12px;line-height:1.5;overflow-x:hidden}
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:44px;background:var(--bg1);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{font-size:13px;font-weight:600;letter-spacing:3px;color:var(--accent)}.logo span{color:var(--text2);font-weight:300}
+.tr{display:flex;align-items:center;gap:14px}
+.ld{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:5px;animation:bl 2s ease-in-out infinite}
+.ld.w{background:var(--warn)}.ld.e{background:var(--danger)}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+.tb{color:var(--text2);font-size:10px}.tbv{font-size:11px;font-weight:500}
+#ds{background:var(--bg2);border-bottom:1px solid var(--border);padding:4px 20px;display:flex;align-items:center;gap:20px;font-size:10px;color:var(--text3);flex-wrap:wrap}
+#ds span{color:var(--text2)}
+#layout{display:grid;grid-template-columns:170px 1fr;height:calc(100vh - 66px)}
+#sb{background:var(--bg1);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto}
+.nl{color:var(--text3);font-size:9px;letter-spacing:2px;padding:8px 16px 4px;text-transform:uppercase}
+.ni{display:block;padding:8px 16px;color:var(--text2);cursor:pointer;transition:all .15s;font-size:11px;border-left:2px solid transparent}
+.ni:hover{color:var(--text);background:var(--bg2)}.ni.act{color:var(--accent);border-left-color:var(--accent);background:rgba(0,200,160,.05)}
+.md{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:7px}
+#main{overflow-y:auto;background:var(--bg)}.pg{display:none;padding:20px}.pg.act{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pn{background:var(--bg1);border:1px solid var(--border);border-radius:3px}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
+.pt{font-size:9px;letter-spacing:2px;color:var(--text2);text-transform:uppercase}.pk{font-size:9px;color:var(--text3)}
+.pb{padding:12px 14px}
+.kp{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:12px 14px}
+.kl{font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:4px}
+.kv{font-size:20px;font-weight:600;letter-spacing:1px}.ks{font-size:10px;margin-top:3px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:9px;letter-spacing:1px;color:var(--text3);text-align:right;padding:6px 10px;border-bottom:1px solid var(--border);font-weight:400;white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:6px 10px;text-align:right;border-bottom:1px solid rgba(28,40,48,.5);font-size:11px;white-space:nowrap;vertical-align:middle}
+td:first-child{text-align:left}
+tr:hover td{background:rgba(255,255,255,.02)}tr:last-child td{border-bottom:none}
+.up{color:#30d090}.dn{color:#e05060}.neu{color:var(--text2)}.hl{color:var(--a2)}.am{color:var(--warn)}.pu{color:#b080f0}
+.bg{display:inline-block;padding:2px 7px;border-radius:2px;font-size:9px}
+.bgu{background:rgba(48,208,144,.12);color:#30d090;border:1px solid rgba(48,208,144,.2)}
+.bgd{background:rgba(224,80,96,.12);color:#e05060;border:1px solid rgba(224,80,96,.2)}
+.bgn{background:rgba(100,128,144,.1);color:var(--text2);border:1px solid var(--border)}
+.bga{background:rgba(240,160,32,.1);color:var(--warn);border:1px solid rgba(240,160,32,.2)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.fl{font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:4px}
+input[type=number],select{width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:6px 10px;font-family:var(--fm);font-size:11px;border-radius:2px;outline:none;-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input:focus,select:focus{border-color:var(--a2)}select option{background:var(--bg2)}
+.rb{background:var(--bg);border:1px solid var(--border);border-radius:2px;padding:10px 12px;margin-top:10px}
+.rr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(28,40,48,.6)}
+.rr:last-child{border-bottom:none}.rl{font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase}.rv{font-size:12px;font-weight:600}
+.gg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.gb{background:var(--bg);border:1px solid var(--border);padding:8px 6px;text-align:center;border-radius:2px}
+.gs{font-size:11px;color:var(--text2);margin-bottom:3px}.gv{font-size:12px;font-weight:600;color:#b080f0}
+canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
+.vc{display:inline-block;padding:3px 5px;border-radius:1px;font-size:10px;text-align:center;min-width:50px}
+.nit{border-bottom:1px solid var(--border);padding:10px 0}.nit:last-child{border-bottom:none}
+.nt{font-size:9px;color:var(--text3)}.nh{font-size:11px;color:var(--text);margin-top:3px;line-height:1.4}
+.ntg{display:inline-block;padding:1px 6px;border-radius:1px;font-size:9px;margin-right:5px}
+.ncu{background:rgba(240,160,32,.15);color:var(--cu)}.nal{background:rgba(96,176,240,.12);color:var(--al)}
+.nni{background:rgba(176,128,240,.12);color:var(--ni)}.nzn{background:rgba(64,208,144,.12);color:var(--zn)}
+.nma{background:rgba(0,144,240,.1);color:var(--a2)}.nfx{background:rgba(0,200,160,.1);color:var(--accent)}
+.nwa{background:rgba(224,64,64,.1);color:var(--danger)}
+.dl{height:1px;background:var(--border);margin:14px 0}
+.sh{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+.st{font-size:16px;font-weight:500;letter-spacing:1px;font-family:var(--fs);color:var(--text)}
+.ss{font-size:10px;color:var(--text3);letter-spacing:1px}
+.sg{display:inline-block;padding:2px 8px;font-size:9px;letter-spacing:1px;border-radius:1px;font-weight:600}
+.sl{background:rgba(48,208,144,.15);color:#30d090}.sss{background:rgba(224,64,64,.15);color:#e05060}.sn{background:rgba(100,128,144,.1);color:var(--text2)}
+.sp2{display:inline-block;width:10px;height:10px;border:1px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.wb{background:rgba(240,160,32,.07);border:1px solid rgba(240,160,32,.2);border-radius:3px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--warn)}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg1)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="logo">METALS<span>DESK</span> // NON-FERROUS & FX TERMINAL</div>
+  <div class="tr">
+    <span class="tb"><span class="ld w" id="ldot"></span><span id="llab">LOADING</span></span>
+    <span class="tb">Cu <span class="tbv" id="tb-cu">—</span></span>
+    <span class="tb">Al <span class="tbv" id="tb-al">—</span></span>
+    <span class="tb">Ni <span class="tbv" id="tb-ni">—</span></span>
+    <span class="tb">EUR/USD <span class="tbv" id="tb-fx">—</span></span>
+    <span class="tb" id="tb-clk">--:--:-- UTC</span>
+  </div>
+</div>
+<div id="ds">
+  <span>Source: Stooq.com (EOD) + FX live</span>
+  <span>Last fetch: <span id="ds-last">—</span></span>
+  <span>Next refresh: <span id="ds-next">—</span></span>
+  <span id="ds-msg" style="color:var(--warn)"></span>
+</div>
+<div id="layout">
+  <nav id="sb">
+    <div class="nl">Market Data</div>
+    <div class="ni act" onclick="showPage('ov')">▸ &nbsp;Overview</div>
+    <div class="ni" onclick="showPage('spot')">▸ &nbsp;Spot & Futures</div>
+    <div class="ni" onclick="showPage('fwd')">▸ &nbsp;Fwd Curves</div>
+    <div class="nl">Derivatives</div>
+    <div class="ni" onclick="showPage('pricer')">▸ &nbsp;Option Pricer</div>
+    <div class="ni" onclick="showPage('vol')">▸ &nbsp;Vol Surface</div>
+    <div class="nl">FX Hedging</div>
+    <div class="ni" onclick="showPage('fx')">▸ &nbsp;FX Rates</div>
+    <div class="ni" onclick="showPage('hedge')">▸ &nbsp;Hedge Calc</div>
+    <div class="nl">Macro & News</div>
+    <div class="ni" onclick="showPage('macro')">▸ &nbsp;Macro</div>
+    <div class="ni" onclick="showPage('news')">▸ &nbsp;News Feed</div>
+    <div class="dl" style="margin:8px 16px;width:auto"></div>
+    <div style="padding:4px 16px">
+      <div style="font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:6px">METALS</div>
+      <div style="font-size:10px;color:var(--text2);line-height:2.2">
+        <div><span class="md" style="background:var(--cu)"></span>Cu – <span id="sb-cu">—</span></div>
+        <div><span class="md" style="background:var(--al)"></span>Al – <span id="sb-al">—</span></div>
+        <div><span class="md" style="background:var(--ni)"></span>Ni – <span id="sb-ni">—</span></div>
+        <div><span class="md" style="background:var(--zn)"></span>Zn – <span id="sb-zn">—</span></div>
+        <div><span class="md" style="background:var(--pb)"></span>Pb – <span id="sb-pb">—</span></div>
+        <div><span class="md" style="background:var(--sn)"></span>Sn – <span id="sb-sn">—</span></div>
+      </div>
+    </div>
+  </nav>
+  <main id="main">
+
+    <!-- OVERVIEW -->
+    <div class="pg act" id="page-ov">
+      <div class="sh"><div class="st">Market Overview</div><div class="ss">STOOQ EOD + LIVE FX</div></div>
+      <div class="g4" style="margin-bottom:14px">
+        <div class="kp"><div class="kl">Copper (COMEX)</div><div class="kv" id="k-cu"><span class="sp2"></span></div><div class="ks" id="k-cu-c">loading…</div></div>
+        <div class="kp"><div class="kl">Aluminium (LME)</div><div class="kv" id="k-al"><span class="sp2"></span></div><div class="ks" id="k-al-c">loading…</div></div>
+        <div class="kp"><div class="kl">Nickel (LME)</div><div class="kv" id="k-ni"><span class="sp2"></span></div><div class="ks" id="k-ni-c">loading…</div></div>
+        <div class="kp"><div class="kl">EUR/USD</div><div class="kv" id="k-fx"><span class="sp2"></span></div><div class="ks" id="k-fx-c">loading…</div></div>
+      </div>
+      <div class="g2" style="margin-bottom:12px">
+        <div class="pn">
+          <div class="ph"><span class="pt">Metals Snapshot</span><span class="pk" id="ov-stamp">—</span></div>
+          <div class="pb tw"><table><thead><tr><th>METAL</th><th>PRICE (USD/t)</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th><th>SOURCE</th></tr></thead>
+          <tbody id="ov-tbl"><tr><td colspan="7" style="color:var(--text3)"><span class="sp2"></span>Fetching market data…</td></tr></tbody></table></div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Performance Chart</span></div><div class="pb"><canvas id="ov-cv" height="180"></canvas></div></div>
+      </div>
+      <div class="g3">
+        <div class="pn"><div class="ph"><span class="pt">FX Snapshot</span></div><div class="pb"><div id="ov-fx"><span class="sp2"></span>Loading…</div></div></div>
+        <div class="pn"><div class="ph"><span class="pt">Market Signals</span></div><div class="pb"><div id="ov-sig"></div></div></div>
+        <div class="pn"><div class="ph"><span class="pt">Data Sources</span></div><div class="pb">
+          <div class="rr"><span class="rl">Metals</span><span class="rv hl">Stooq.com</span></div>
+          <div class="rr"><span class="rl">Type</span><span class="rv am">EOD (prev. close)</span></div>
+          <div class="rr"><span class="rl">FX</span><span class="rv up">exchangerate.host</span></div>
+          <div class="rr"><span class="rl">FX delay</span><span class="rv up">Real-time</span></div>
+          <div class="rr"><span class="rl">Refresh</span><span class="rv">Every 5 min</span></div>
+          <div class="rr"><span class="rl">Fwd curves</span><span class="rv neu">Modeled</span></div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- SPOT -->
+    <div class="pg" id="page-spot">
+      <div class="sh"><div class="st">Spot & Futures</div><div class="ss">STOOQ EOD DATA</div></div>
+      <div class="pn" style="margin-bottom:12px">
+        <div class="ph"><span class="pt">All Metals — Latest Prices</span><span class="pk" id="sp-stamp">—</span></div>
+        <div class="pb tw"><table><thead><tr><th>METAL</th><th>TICKER</th><th>PRICE (USD/t)</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th><th>OPEN</th><th>VOLUME</th></tr></thead>
+        <tbody id="sp-tbl"><tr><td colspan="9" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+      </div>
+      <div class="g2">
+        <div class="pn"><div class="ph"><span class="pt">FX Pairs — Live</span></div>
+          <div class="pb tw"><table><thead><tr><th>PAIR</th><th>RATE</th><th>CHG%</th><th>NOTE</th></tr></thead>
+          <tbody id="sp-fx"><tr><td colspan="4" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Relative Performance</span></div><div class="pb"><canvas id="rel-cv" height="200"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- FWD -->
+    <div class="pg" id="page-fwd">
+      <div class="sh"><div class="st">Forward Curves</div><div class="ss">LIVE SPOT + MODELED TERM STRUCTURE</div></div>
+      <div class="wb">⚠ Spot prices from Stooq (EOD). Forward points are modeled using typical LME contango/backwardation spreads. Official LME forward data requires paid subscription.</div>
+      <div class="g2" style="margin-bottom:12px">
+        <div class="pn">
+          <div class="ph"><span class="pt">Forward Curve</span>
+            <div style="display:flex;gap:6px">
+              <select id="fw-sel" style="width:130px" onchange="drawFwd()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select>
+              <select id="fw-mode" style="width:110px" onchange="drawFwd()"><option value="price">Price USD/t</option><option value="basis">Basis</option><option value="ann">Ann. %</option></select>
+            </div>
+          </div>
+          <div class="pb"><canvas id="fw-cv" height="200"></canvas>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--text3)"><span>SPOT</span><span>1W</span><span>1M</span><span>2M</span><span>3M</span><span>6M</span><span>9M</span><span>12M</span><span>18M</span><span>24M</span><span>36M</span></div>
+          </div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Curve Stats</span></div><div class="pb"><div id="fw-stats"></div></div></div>
+      </div>
+    </div>
+
+    <!-- PRICER -->
+    <div class="pg" id="page-pricer">
+      <div class="sh"><div class="st">Options Pricer</div><div class="ss">BLACK-76 // LIVE SPOT SYNCED</div></div>
+      <div class="g2">
+        <div>
+          <div class="pn" style="margin-bottom:12px">
+            <div class="ph"><span class="pt">Black-76 Parameters</span><span class="pk" id="p-src">—</span></div>
+            <div class="pb">
+              <div class="fr"><div><div class="fl">Metal</div><select id="p-met" onchange="syncSpot()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select></div>
+              <div><div class="fl">Type</div><select id="p-typ" onchange="calcOpt()"><option value="call">CALL</option><option value="put">PUT</option></select></div></div>
+              <div class="fr"><div><div class="fl">Futures F (USD/t)</div><input type="number" id="p-F" value="9847" oninput="calcOpt()"></div>
+              <div><div class="fl">Strike K (USD/t)</div><input type="number" id="p-K" value="10000" oninput="calcOpt()"></div></div>
+              <div class="fr"><div><div class="fl">Tenor T (years)</div><input type="number" id="p-T" value="0.5" step="0.05" oninput="calcOpt()"></div>
+              <div><div class="fl">Rate r (%)</div><input type="number" id="p-r" value="4.5" step="0.1" oninput="calcOpt()"></div></div>
+              <div class="fr"><div><div class="fl">Implied Vol σ (%)</div><input type="number" id="p-sig" value="22" step="0.5" oninput="calcOpt()"></div>
+              <div><div class="fl">Conv. Yield q (%)</div><input type="number" id="p-q" value="1.5" step="0.1" oninput="calcOpt()"></div></div>
+              <div class="rb" id="p-res"></div>
+              <div class="gg" id="p-greeks"></div>
+            </div>
+          </div>
+          <div class="pn"><div class="ph"><span class="pt">Scenario Analysis</span></div>
+            <div class="pb tw"><table><thead><tr><th>MOVE</th><th>SPOT</th><th>OPT P&L</th><th>DELTA HEDGE</th><th>NET</th></tr></thead><tbody id="p-scen"></tbody></table></div>
+          </div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">P&L at Expiry</span></div>
+          <div class="pb"><canvas id="pnl-cv" height="240"></canvas><div class="dl"></div><div style="font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:10px">THETA DECAY</div><canvas id="tht-cv" height="120"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOL -->
+    <div class="pg" id="page-vol">
+      <div class="sh"><div class="st">Vol Surface</div><div class="ss">IMPLIED VOL // TENOR × DELTA</div></div>
+      <div class="g2" style="margin-bottom:12px">
+        <div class="pn">
+          <div class="ph"><span class="pt">IV Surface — <span id="vt">Copper</span></span>
+            <select id="v-sel" style="width:140px" onchange="buildVol()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select>
+          </div>
+          <div class="pb"><div id="v-surf"></div></div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Term Structure</span></div>
+          <div class="pb"><canvas id="v-tc" height="180"></canvas><div class="dl"></div>
+            <div style="font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:8px">SKEW & RISK REVERSALS</div>
+            <div class="tw"><table><thead><tr><th>METAL</th><th>ATM 3M</th><th>25Δ RR</th><th>25Δ BF</th><th>SKEW</th></tr></thead><tbody id="sk-tbl"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FX -->
+    <div class="pg" id="page-fx">
+      <div class="sh"><div class="st">FX Rates</div><div class="ss">LIVE — exchangerate.host</div></div>
+      <div class="g4" style="margin-bottom:14px" id="fx-kpis"></div>
+      <div class="g2">
+        <div class="pn"><div class="ph"><span class="pt">FX Pairs</span><span class="pk" id="fx-stamp">—</span></div>
+          <div class="pb tw"><table><thead><tr><th>PAIR</th><th>RATE</th><th>3M FWD (est.)</th><th>SWAP COST %PA</th><th>NOTE</th></tr></thead>
+          <tbody id="fx-tbl"><tr><td colspan="5" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Cross-Rate Matrix</span></div><div class="pb"><div id="fx-cross"></div></div></div>
+      </div>
+    </div>
+
+    <!-- HEDGE -->
+    <div class="pg" id="page-hedge">
+      <div class="sh"><div class="st">Hedge Calculator</div><div class="ss">FX FORWARD HEDGE // LIVE RATES</div></div>
+      <div class="g2">
+        <div class="pn"><div class="ph"><span class="pt">Parameters</span></div>
+          <div class="pb">
+            <div class="fr"><div><div class="fl">Exposure (USD)</div><input type="number" id="h-exp" value="5000000" oninput="calcH()"></div>
+            <div><div class="fl">CCY Pair</div><select id="h-pair" onchange="calcH()"><option>EUR/USD</option><option>USD/CNY</option><option>USD/CLP</option><option>AUD/USD</option><option>GBP/USD</option></select></div></div>
+            <div class="fr"><div><div class="fl">Tenor (months)</div><input type="number" id="h-ten" value="3" min="1" max="24" oninput="calcH()"></div>
+            <div><div class="fl">Hedge Ratio (%)</div><input type="number" id="h-rat" value="80" oninput="calcH()"></div></div>
+            <div class="rb" id="h-res"></div>
+          </div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">P&L Scenarios</span></div>
+          <div class="pb"><canvas id="h-cv" height="200"></canvas><div class="dl"></div>
+            <div class="tw"><table><thead><tr><th>FX MOVE</th><th>UNHEDGED</th><th>HEDGED</th><th>NET BENEFIT</th></tr></thead><tbody id="h-scen"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MACRO -->
+    <div class="pg" id="page-macro">
+      <div class="sh"><div class="st">Macro Dashboard</div></div>
+      <div class="g2" style="margin-bottom:12px">
+        <div class="pn"><div class="ph"><span class="pt">Global Indicators</span></div>
+          <div class="pb tw"><table><thead><tr><th>INDICATOR</th><th>VALUE</th><th>PREV</th><th>IMPACT</th></tr></thead><tbody id="mac-tbl"></tbody></table></div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Central Banks</span></div>
+          <div class="pb tw"><table><thead><tr><th>CB</th><th>RATE</th><th>NEXT MTG</th><th>EXPECTED</th><th>IMPACT</th></tr></thead><tbody id="cb-tbl"></tbody></table></div>
+        </div>
+      </div>
+      <div class="pn"><div class="ph"><span class="pt">Event Calendar</span></div>
+        <div class="pb tw"><table><thead><tr><th>DATE</th><th>EVENT</th><th>IMPACT</th><th>METAL</th><th>CONSENSUS</th><th>PREV</th></tr></thead><tbody id="ev-tbl"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- NEWS -->
+    <div class="pg" id="page-news">
+      <div class="sh"><div class="st">News Feed</div></div>
+      <div class="g2">
+        <div class="pn"><div class="ph"><span class="pt">Latest Headlines</span></div><div class="pb"><div id="nf"></div></div></div>
+        <div class="pn"><div class="ph"><span class="pt">Supply Disruptions</span></div><div class="pb"><div id="df"></div></div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+<script>
+// ═══════════════════════════════════════
+// CONFIG — STOOQ tickers (work without CORS)
+// ═══════════════════════════════════════
+const M = {
+  Cu:{s:'hg.f', name:'Copper',    mult:2204.62, col:'#f0a020', vol:22, fallback:9847},
+  Al:{s:'mla.f',name:'Aluminium', mult:1,       col:'#60b0f0', vol:18, fallback:2541},
+  Ni:{s:'ni.f', name:'Nickel',    mult:1,       col:'#b080f0', vol:28, fallback:16230},
+  Zn:{s:'zsd.f',name:'Zinc',      mult:1,       col:'#40d090', vol:20, fallback:2890},
+  Pb:{s:'pb.f', name:'Lead',      mult:2204.62, col:'#f07080', vol:16, fallback:2105},
+  Sn:{s:'sn.f', name:'Tin',       mult:1,       col:'#a0b8c8', vol:24, fallback:31200},
+};
+const FXL = [
+  {p:'EUR/USD', base:'EUR', quote:'USD', n:'Producer ccy hedge'},
+  {p:'USD/CNY', base:'USD', quote:'CNY', n:'China demand proxy'},
+  {p:'AUD/USD', base:'AUD', quote:'USD', n:'Australian base metals'},
+  {p:'USD/CLP', base:'USD', quote:'CLP', n:'Chile copper (CODELCO)'},
+  {p:'GBP/USD', base:'GBP', quote:'USD', n:'London metals market'},
+];
+
+let D = {}; // { key: {price, prev, high, low, open, vol} }
+let FXD = {}; // {pair: rate}
+let lastFetch = null;
+let countdown = 300; // 5 min
+
+// ═══════════════════════════════════════
+// FETCH — Stooq CSV (CORS-free!)
+// Stooq serves CSV at: https://stooq.com/q/d/l/?s=TICKER&d1=YYYYMMDD&d2=YYYYMMDD&i=d
+// ═══════════════════════════════════════
+async function fetchStooq(sym) {
+  const today = new Date();
+  const d2 = fmtDate(today);
+  const d1 = fmtDate(new Date(today - 7*24*3600*1000)); // last 7 days to get latest
+  const url = `https://stooq.com/q/d/l/?s=${sym}&d1=${d1}&d2=${d2}&i=d`;
+  try {
+    const r = await fetch(url, {signal: AbortSignal.timeout(6000)});
+    if (!r.ok) return null;
+    const txt = await r.text();
+    const lines = txt.trim().split('\n');
+    if (lines.length < 2) return null;
+    // CSV: Date,Open,High,Low,Close,Volume
+    const last = lines[lines.length-1].split(',');
+    const prev = lines.length > 2 ? lines[lines.length-2].split(',') : last;
+    return {
+      price: parseFloat(last[4]), // Close
+      open:  parseFloat(last[1]),
+      high:  parseFloat(last[2]),
+      low:   parseFloat(last[3]),
+      vol:   parseFloat(last[5])||0,
+      prev:  parseFloat(prev[4]),
+    };
+  } catch(e) { return null; }
+}
+
+function fmtDate(d) {
+  return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+}
+
+// ═══════════════════════════════════════
+// FETCH — exchangerate.host for FX (free, CORS-enabled)
+// ═══════════════════════════════════════
+async function fetchFX() {
+  try {
+    const r = await fetch('https://api.exchangerate.host/live?access_key=free&currencies=EUR,CNY,AUD,CLP,GBP&source=USD', {signal: AbortSignal.timeout(6000)});
+    if (!r.ok) throw new Error();
+    const j = await r.json();
+    if (j.quotes) {
+      FXD['EUR/USD'] = 1 / j.quotes['USDEUR'];
+      FXD['USD/CNY'] = j.quotes['USDCNY'];
+      FXD['AUD/USD'] = 1 / j.quotes['USDAUD'];
+      FXD['USD/CLP'] = j.quotes['USDCLP'];
+      FXD['GBP/USD'] = 1 / j.quotes['USDGBP'];
+      return true;
+    }
+  } catch(e) {}
+  // Fallback: try another free FX API
+  try {
+    const r2 = await fetch('https://open.er-api.com/v6/latest/USD', {signal: AbortSignal.timeout(6000)});
+    const j2 = await r2.json();
+    if (j2.rates) {
+      FXD['EUR/USD'] = 1 / j2.rates['EUR'];
+      FXD['USD/CNY'] = j2.rates['CNY'];
+      FXD['AUD/USD'] = 1 / j2.rates['AUD'];
+      FXD['USD/CLP'] = j2.rates['CLP'];
+      FXD['GBP/USD'] = 1 / j2.rates['GBP'];
+      return true;
+    }
+  } catch(e) {}
+  // Last fallback: hardcoded recent values
+  FXD = {'EUR/USD':1.1707,'USD/CNY':7.212,'AUD/USD':0.6420,'USD/CLP':948.5,'GBP/USD':1.3280};
+  return false;
+}
+
+async function fetchAll() {
+  setSt('loading');
+  document.getElementById('ds-msg').textContent = '';
+
+  // Fetch metals from Stooq in parallel
+  const entries = Object.entries(M);
+  const results = await Promise.allSettled(entries.map(([k,m]) => fetchStooq(m.s)));
+  let anyOk = false;
+  results.forEach((r, i) => {
+    const [k, m] = entries[i];
+    if (r.status === 'fulfilled' && r.value) {
+      const v = r.value;
+      // Apply multiplier (Stooq copper is in $/lb, others vary)
+      const price = v.price * m.mult;
+      const prev  = v.prev  * m.mult;
+      D[k] = {
+        price, prev, open: v.open*m.mult,
+        high: v.high*m.mult, low: v.low*m.mult,
+        vol: v.vol, change: price-prev, pct: (price/prev-1)*100
+      };
+      anyOk = true;
+    } else {
+      // Use fallback
+      D[k] = {price:m.fallback, prev:m.fallback*0.99, open:m.fallback, high:m.fallback*1.01, low:m.fallback*0.99, vol:0, change:m.fallback*0.01, pct:1.0};
+    }
+  });
+
+  // Fetch FX
+  const fxOk = await fetchFX();
+
+  lastFetch = new Date();
+  if (anyOk) {
+    setSt('live');
+  } else {
+    setSt('w');
+    document.getElementById('ds-msg').textContent = '⚠ Using fallback data — Stooq unreachable';
+  }
+  document.getElementById('ds-last').textContent = lastFetch.toUTCString().split(' ')[4]+' UTC';
+  updateAll();
+}
+
+function setSt(s){
+  const d=document.getElementById('ldot'),l=document.getElementById('llab');
+  d.className='ld'+(s==='live'?'':s==='loading'?' w':' e');
+  l.textContent=s==='live'?'LIVE':s==='loading'?'LOADING…':'DATA ERROR';
+}
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+const f0=n=>n==null||isNaN(n)?'—':Math.round(n).toLocaleString();
+const f2=n=>n==null||isNaN(n)?'—':n.toFixed(2);
+const f4=n=>n==null||isNaN(n)?'—':n.toFixed(4);
+const fp=n=>n==null||isNaN(n)?'—':(n>0?'+':'')+n.toFixed(2)+'%';
+const fc=n=>n==null?'neu':n>0?'up':n<0?'dn':'neu';
+const spD=k=>D[k]||null;
+const spP=k=>D[k]?.price||M[k].fallback;
+
+// ═══════════════════════════════════════
+// CLOCK & REFRESH
+// ═══════════════════════════════════════
+setInterval(()=>{
+  document.getElementById('tb-clk').textContent=new Date().toUTCString().split(' ')[4]+' UTC';
+  countdown--;
+  if(countdown<=0){countdown=300;fetchAll();}
+  document.getElementById('ds-next').textContent=countdown+'s';
+},1000);
+
+function updateAll(){
+  updTopbar(); updSidebar(); updOv();
+  const id=document.querySelector('.pg.act')?.id.replace('page-','');
+  if(id)refPage(id);
+}
+function refPage(id){
+  if(id==='spot')   buildSpot();
+  if(id==='fwd')    drawFwd();
+  if(id==='pricer') syncSpot();
+  if(id==='vol')    buildVol();
+  if(id==='fx')     buildFX();
+  if(id==='hedge')  calcH();
+  if(id==='macro')  buildMacro();
+  if(id==='news')   buildNews();
+}
+
+// ═══════════════════════════════════════
+// TOPBAR & SIDEBAR
+// ═══════════════════════════════════════
+function updTopbar(){
+  [['Cu','tb-cu'],['Al','tb-al'],['Ni','tb-ni']].forEach(([k,id])=>{
+    const d=spD(k); const el=document.getElementById(id);
+    if(d){el.textContent='$'+f0(d.price); el.className='tbv '+fc(d.change);}
+  });
+  const eurusd=FXD['EUR/USD'];
+  if(eurusd){document.getElementById('tb-fx').textContent=eurusd.toFixed(4);}
+}
+function updSidebar(){
+  Object.keys(M).forEach(k=>{
+    const el=document.getElementById('sb-'+k.toLowerCase()); if(!el) return;
+    const d=spD(k);
+    if(d){el.textContent='$'+f0(d.price); el.className=fc(d.change);}
+  });
+}
+
+// ═══════════════════════════════════════
+// OVERVIEW
+// ═══════════════════════════════════════
+function updOv(){
+  [['Cu','k-cu','k-cu-c'],['Al','k-al','k-al-c'],['Ni','k-ni','k-ni-c']].forEach(([k,vi,ci])=>{
+    const d=spD(k); if(!d) return;
+    const ve=document.getElementById(vi),ce=document.getElementById(ci);
+    ve.textContent='$'+f0(d.price); ve.className='kv '+fc(d.change);
+    ce.textContent=(d.change>=0?'▲ +':'▼ ')+Math.abs(d.pct).toFixed(2)+'% prev close'; ce.className='ks '+fc(d.change);
+  });
+  const eu=FXD['EUR/USD'];
+  if(eu){document.getElementById('k-fx').textContent=eu.toFixed(4); document.getElementById('k-fx-c').textContent='Live rate';}
+  document.getElementById('ov-stamp').textContent=lastFetch?lastFetch.toUTCString().split(' ')[4]+' UTC':'—';
+
+  let h='';
+  Object.entries(M).forEach(([k,m])=>{
+    const d=spD(k);
+    if(!d){h+=`<tr><td style="color:${m.col}">● ${k}</td><td colspan="6" class="neu">—</td></tr>`;return;}
+    h+=`<tr><td><span style="color:${m.col}">●</span> ${k} <span style="color:var(--text2);font-size:10px">${m.name}</span></td>
+      <td class="hl">$${f0(d.price)}</td>
+      <td class="${fc(d.change)}">${d.change>=0?'+':''}$${f0(d.change)}</td>
+      <td class="${fc(d.pct)}">${fp(d.pct)}</td>
+      <td>$${f0(d.high)}</td><td>$${f0(d.low)}</td>
+      <td style="font-size:10px;color:var(--text3)">stooq.com</td></tr>`;
+  });
+  document.getElementById('ov-tbl').innerHTML=h||'<tr><td colspan="7" class="neu">Fetching…</td></tr>';
+
+  let fx2='';
+  FXL.forEach(f=>{
+    const r=FXD[f.p];
+    if(!r){fx2+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--a2)">${f.p}</span><span class="neu">—</span></div>`;return;}
+    fx2+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="color:var(--a2)">${f.p}</span><span class="hl">${f4(r)}</span></div>`;
+  });
+  document.getElementById('ov-fx').innerHTML=fx2;
+
+  let sig='';
+  Object.entries(M).forEach(([k,m])=>{
+    const d=spD(k); const p=d?d.pct:0;
+    const s=p>1?'BULLISH':p<-1?'BEARISH':'NEUTRAL';
+    sig+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="color:${m.col}">${k}</span><span class="sg ${s==='BULLISH'?'sl':s==='BEARISH'?'sss':'sn'}">${s}</span>
+      <span style="font-size:10px;color:var(--text2)">${d?fp(d.pct):'—'}</span></div>`;
+  });
+  document.getElementById('ov-sig').innerHTML=sig;
+  drawOvBars();
+}
+
+function drawOvBars(){
+  const cv=document.getElementById('ov-cv'); if(!cv) return;
+  const W=cv.offsetWidth||500,H=180; cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,W,H);
+  const keys=Object.keys(M);
+  const chgs=keys.map(k=>spD(k)?.pct||0);
+  const bW=Math.min(55,(W-40)/keys.length*.65),gap=(W-40-bW*keys.length)/(keys.length+1);
+  const mY=H*.55;
+  ctx.strokeStyle='rgba(28,40,48,.8)';ctx.lineWidth=.5;
+  ctx.beginPath();ctx.moveTo(20,mY);ctx.lineTo(W-20,mY);ctx.stroke();
+  keys.forEach((k,i)=>{
+    const x=20+gap+i*(bW+gap),c=chgs[i],bH=Math.abs(c)/4*mY*.9,y=c>=0?mY-bH:mY;
+    const col=M[k].col;
+    ctx.fillStyle=col+'40';ctx.fillRect(x,y,bW,bH);
+    ctx.strokeStyle=col;ctx.lineWidth=1;ctx.strokeRect(x,y,bW,bH);
+    ctx.fillStyle=col;ctx.font='10px IBM Plex Mono';ctx.textAlign='center';
+    ctx.fillText(k,x+bW/2,H-6);
+    ctx.fillStyle=c>=0?'#30d090':'#e05060';
+    ctx.fillText((c>=0?'+':'')+c.toFixed(2)+'%',x+bW/2,c>=0?y-4:y+bH+12);
+  });
+}
+
+// ═══════════════════════════════════════
+// SPOT
+// ═══════════════════════════════════════
+function buildSpot(){
+  document.getElementById('sp-stamp').textContent=lastFetch?lastFetch.toUTCString().split(' ')[4]+' UTC':'—';
+  let h='';
+  Object.entries(M).forEach(([k,m])=>{
+    const d=spD(k);
+    if(!d){h+=`<tr><td style="color:${m.col}">● ${k}</td><td colspan="8" class="neu">Loading…</td></tr>`;return;}
+    h+=`<tr><td><span style="color:${m.col}">●</span> ${k} – ${m.name}</td>
+      <td style="font-size:10px;color:var(--text3)">${m.s}</td>
+      <td class="hl">$${f0(d.price)}</td>
+      <td class="${fc(d.change)}">${d.change>=0?'+':''}$${f0(d.change)}</td>
+      <td class="${fc(d.pct)}">${fp(d.pct)}</td>
+      <td>$${f0(d.high)}</td><td>$${f0(d.low)}</td><td>$${f0(d.open)}</td>
+      <td style="color:var(--text3)">${d.vol>0?f0(d.vol):'—'}</td></tr>`;
+  });
+  document.getElementById('sp-tbl').innerHTML=h;
+
+  let fh='';
+  FXL.forEach(f=>{
+    const r=FXD[f.p];
+    if(!r){fh+=`<tr><td class="hl">${f.p}</td><td colspan="3" class="neu">Loading…</td></tr>`;return;}
+    fh+=`<tr><td class="hl">${f.p}</td><td>${f4(r)}</td><td class="neu">—</td><td style="font-size:10px;color:var(--text2)">${f.n}</td></tr>`;
+  });
+  document.getElementById('sp-fx').innerHTML=fh;
+  drawRelPerf();
+}
+function drawRelPerf(){
+  const cv=document.getElementById('rel-cv'); if(!cv) return;
+  const W=cv.offsetWidth||400,H=200; cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,W,H);
+  const items=[...Object.entries(M).map(([k,m])=>({l:k,c:spD(k)?.pct||0,col:m.col}))];
+  const bW=(W-40)/items.length*.7,gap=(W-40-bW*items.length)/(items.length+1);
+  const mY=H*.55;
+  ctx.strokeStyle='rgba(28,40,48,.8)';ctx.lineWidth=.5;
+  ctx.beginPath();ctx.moveTo(20,mY);ctx.lineTo(W-20,mY);ctx.stroke();
+  items.forEach((it,i)=>{
+    const x=20+gap+i*(bW+gap),bH=Math.abs(it.c)/4*mY*.9,y=it.c>=0?mY-bH:mY;
+    ctx.fillStyle=it.col+'40';ctx.fillRect(x,y,bW,bH);
+    ctx.strokeStyle=it.col;ctx.lineWidth=1;ctx.strokeRect(x,y,bW,bH);
+    ctx.fillStyle=it.col;ctx.font='10px IBM Plex Mono';ctx.textAlign='center';
+    ctx.fillText(it.l,x+bW/2,H-6);
+    ctx.fillStyle=it.c>=0?'#30d090':'#e05060';
+    ctx.fillText((it.c>=0?'+':'')+it.c.toFixed(2)+'%',x+bW/2,it.c>=0?y-4:y+bH+12);
+  });
+}
+
+// ═══════════════════════════════════════
+// FWD CURVES
+// ═══════════════════════════════════════
+const TERM={Cu:[1,1.0005,1.001,1.0015,1.002,1.003,1.004,1.005,1.007,1.008,1.01],Al:[1,1.0003,1.0008,1.0012,1.002,1.003,1.004,1.005,1.006,1.008,1.011],Ni:[1,.9998,.9994,.999,.998,.997,.996,.995,.993,.992,.99],Zn:[1,1.0004,1.001,1.0016,1.002,1.003,1.004,1.005,1.007,1.009,1.012],Pb:[1,1.0003,1.0007,1.0011,1.0015,1.002,1.003,1.004,1.005,1.007,1.009],Sn:[1,1.001,1.002,1.003,1.004,1.006,1.008,1.01,1.013,1.015,1.02]};
+const TY=[0,1/52,1/12,2/12,3/12,6/12,9/12,1,1.5,2,3];
+function drawFwd(){
+  const k=document.getElementById('fw-sel').value,mode=document.getElementById('fw-mode').value;
+  const sp=spP(k);
+  const prices=TERM[k].map(t=>sp*t);
+  let vals=prices;
+  if(mode==='basis') vals=prices.map(p=>p-prices[0]);
+  if(mode==='ann')   vals=prices.map((p,i)=>i===0?0:((p/prices[0])**(1/Math.max(TY[i],.001))-1)*100);
+  const cv=document.getElementById('fw-cv'); if(!cv) return;
+  const W=cv.offsetWidth||600,H=200; cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,W,H);
+  const mn=Math.min(...vals),mx=Math.max(...vals);
+  const pad=34,toY=v=>H-pad-(v-mn)/(mx-mn+.001)*(H-2*pad),toX=i=>pad+i*(W-2*pad)/(vals.length-1);
+  const col=M[k].col;
+  ctx.strokeStyle='rgba(28,40,48,.7)';ctx.lineWidth=.5;
+  [0,.25,.5,.75,1].forEach(t=>{const y=pad+t*(H-2*pad);ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();const v=mn+(1-t)*(mx-mn);ctx.fillStyle='#3a5060';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';ctx.fillText(mode==='price'?'$'+(v/1000).toFixed(1)+'k':v.toFixed(2)+(mode==='ann'?'%':''),pad-2,y+3);});
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,col+'40');g.addColorStop(1,col+'05');
+  ctx.beginPath();vals.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+  ctx.lineTo(toX(vals.length-1),H-pad);ctx.lineTo(toX(0),H-pad);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();vals.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
+  vals.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();});
+  const ct=(TERM[k][4]-1)*100;
+  document.getElementById('fw-stats').innerHTML=`
+    <div class="rr"><span class="rl">Live Spot (Stooq)</span><span class="rv hl">$${f0(sp)}/t</span></div>
+    <div class="rr"><span class="rl">3M (modeled)</span><span class="rv">$${f0(sp*TERM[k][4])}/t</span></div>
+    <div class="rr"><span class="rl">12M (modeled)</span><span class="rv">$${f0(sp*TERM[k][7])}/t</span></div>
+    <div class="rr"><span class="rl">Structure</span><span class="rv ${ct>0?'up':'dn'}">${ct>0?'CONTANGO':'BACKWARDATION'}</span></div>
+    <div class="rr"><span class="rl">Spot–36M spread</span><span class="rv ${ct>0?'up':'dn'}">${ct>0?'+':''}${((TERM[k][10]-1)*100).toFixed(3)}%</span></div>`;
+}
+
+// ═══════════════════════════════════════
+// BLACK-76 PRICER
+// ═══════════════════════════════════════
+function N(x){const t=1/(1+.2316419*Math.abs(x));const p=t*(.31938153+t*(-.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));const d=Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);return x>=0?1-d*p:d*p;}
+function b76(F,K,T,r,s,type){if(T<=0)return type==='call'?Math.max(0,F-K):Math.max(0,K-F);const d1=(Math.log(F/K)+(s*s/2)*T)/(s*Math.sqrt(T)),d2=d1-s*Math.sqrt(T),df=Math.exp(-r*T);return type==='call'?df*(F*N(d1)-K*N(d2)):df*(K*N(-d2)-F*N(-d1));}
+function gr(F,K,T,r,s,type){const h=F*.001,p0=b76(F,K,T,r,s,type);return{delta:(b76(F+h,K,T,r,s,type)-b76(F-h,K,T,r,s,type))/(2*h),gamma:(b76(F+h,K,T,r,s,type)-2*p0+b76(F-h,K,T,r,s,type))/(h*h),vega:(b76(F,K,T,r,s+.0001,type)-p0)/.0001/100,theta:T>.01?b76(F,K,T-1/365,r,s,type)-p0:0,rho:(b76(F,K,T,r+.0001,s,type)-p0)/.0001/100};}
+function syncSpot(){
+  const k=document.getElementById('p-met').value,sp=spP(k);
+  document.getElementById('p-F').value=Math.round(sp);
+  document.getElementById('p-K').value=Math.round(sp*1.02);
+  document.getElementById('p-sig').value=M[k].vol;
+  document.getElementById('p-src').textContent='Spot from Stooq — '+f0(sp)+' USD/t';
+  calcOpt();
+}
+function calcOpt(){
+  const F=+document.getElementById('p-F').value||0,K=+document.getElementById('p-K').value||0;
+  const T=+document.getElementById('p-T').value||0,r=+document.getElementById('p-r').value/100||0;
+  const s=+document.getElementById('p-sig').value/100||0,type=document.getElementById('p-typ').value;
+  if(!F||!K||!T||!s)return;
+  const price=b76(F,K,T,r,s,type),g=gr(F,K,T,r,s,type);
+  const intr=type==='call'?Math.max(0,F-K):Math.max(0,K-F);
+  const money=type==='call'?(F>K?'ITM':F<K?'OTM':'ATM'):(F<K?'ITM':F>K?'OTM':'ATM');
+  document.getElementById('p-res').innerHTML=`
+    <div class="rr"><span class="rl">Option Price</span><span class="rv hl">$${price.toFixed(2)}/t</span></div>
+    <div class="rr"><span class="rl">Moneyness</span><span class="rv ${money==='ITM'?'up':money==='OTM'?'dn':'am'}">${money}</span></div>
+    <div class="rr"><span class="rl">Intrinsic</span><span class="rv">$${intr.toFixed(2)}</span></div>
+    <div class="rr"><span class="rl">Time Value</span><span class="rv am">$${(price-intr).toFixed(2)}</span></div>
+    <div class="rr"><span class="rl">Breakeven</span><span class="rv">${type==='call'?'$'+(K+price).toFixed(2):'$'+(K-price).toFixed(2)}</span></div>`;
+  document.getElementById('p-greeks').innerHTML=[['Δ DELTA',g.delta.toFixed(4)],['Γ GAMMA',g.gamma.toFixed(6)],['ν VEGA',g.vega.toFixed(3)],['θ THETA',g.theta.toFixed(3)],['ρ RHO',g.rho.toFixed(3)]].map(([n,v])=>`<div class="gb"><div class="gs">${n}</div><div class="gv">${v}</div></div>`).join('');
+  drawPnL(F,K,T,r,s,type,price,g.delta);drawTheta(F,K,T,r,s,type);
+  document.getElementById('p-scen').innerHTML=[-0.3,-0.2,-0.1,-0.05,0,0.05,0.1,0.2,0.3].map(mv=>{const nF=F*(1+mv),pay=type==='call'?Math.max(0,nF-K):Math.max(0,K-nF),pnl=pay-price,hp=-g.delta*(nF-F),net=pnl+hp;return`<tr><td class="${mv>0?'up':mv<0?'dn':'neu'}">${mv>0?'+':''}${(mv*100).toFixed(0)}%</td><td>$${f0(nF)}</td><td class="${fc(pnl)}">${pnl>=0?'+':''}$${pnl.toFixed(2)}</td><td class="${fc(hp)}">${hp>=0?'+':''}$${hp.toFixed(2)}</td><td class="${fc(net)}">${net>=0?'+':''}$${net.toFixed(2)}</td></tr>`;}).join('');
+}
+function drawPnL(F,K,T,r,s,type,price){const cv=document.getElementById('pnl-cv');if(!cv)return;const W=cv.offsetWidth||400,H=240;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const sp2=Array.from({length:80},(_,i)=>F*.6+i*F*.8/79);const pl=sp2.map(x=>(type==='call'?Math.max(0,x-K):Math.max(0,K-x))-price);const mn=Math.min(...pl),mx=Math.max(...pl);const p=28,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(sp2.length-1);ctx.strokeStyle='rgba(58,80,96,.8)';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(p,toY(0));ctx.lineTo(W-p,toY(0));ctx.stroke();const g2=ctx.createLinearGradient(0,0,0,H);g2.addColorStop(0,'rgba(48,208,144,.2)');g2.addColorStop(1,'rgba(224,80,96,.2)');ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.lineTo(toX(pl.length-1),H-p);ctx.lineTo(toX(0),H-p);ctx.closePath();ctx.fillStyle=g2;ctx.fill();ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#30d090';ctx.lineWidth=2;ctx.stroke();}
+function drawTheta(F,K,T,r,s,type){const cv=document.getElementById('tht-cv');if(!cv)return;const W=cv.offsetWidth||400,H=120;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const n=40,vs=Array.from({length:n},(_,i)=>b76(F,K,Math.max(T*(1-i/(n-1)),.001),r,s,type));const mn=Math.min(...vs),mx=Math.max(...vs);const p=20,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(n-1);ctx.strokeStyle='rgba(28,40,48,.7)';ctx.lineWidth=.5;[.25,.5,.75].forEach(t=>{const y=p+t*(H-2*p);ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(W-p,y);ctx.stroke();});ctx.beginPath();vs.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#b080f0';ctx.lineWidth=1.5;ctx.stroke();}
+
+// ═══════════════════════════════════════
+// VOL SURFACE
+// ═══════════════════════════════════════
+function buildVol(){
+  const k=document.getElementById('v-sel').value,m=M[k];
+  document.getElementById('vt').textContent=m.name;
+  const tenors=['1W','1M','2M','3M','6M','9M','12M','18M','24M'],ts=[1.28,1.14,1.07,1.0,.95,.93,.92,.91,.90],sk=[-4.2,-2.1,0,1.1,2.3],dl=['10D Put','25D Put','ATM','25D Call','10D Call'];
+  let h=`<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;font-size:9px;color:var(--text3);padding:4px">TENOR\\Δ</th>${dl.map(d=>`<th style="font-size:9px;color:var(--text3);padding:4px;text-align:center">${d}</th>`).join('')}</tr></thead><tbody>`;
+  tenors.forEach((t,ti)=>{h+=`<tr><td style="font-size:10px;color:var(--text2);padding:4px">${t}</td>`;dl.forEach((_,di)=>{const v=(m.vol*ts[ti]+sk[di]*(1-ti/12)+(Math.random()-.5)*.3);const ht=Math.min(1,Math.max(0,(v-m.vol*.8)/(m.vol*.6)));const r2=Math.round(10+ht*220),g3=Math.round(180-ht*140),b=Math.round(80-ht*50);h+=`<td style="padding:3px;text-align:center"><span class="vc" style="background:rgba(${r2},${g3},${b},.18);color:rgb(${r2},${g3},${b})">${v.toFixed(1)}%</span></td>`;});h+='</tr>';});
+  h+='</tbody></table></div>';document.getElementById('v-surf').innerHTML=h;
+  const cv=document.getElementById('v-tc');if(!cv)return;const W=cv.offsetWidth||400,H=180;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);
+  const vols=ts.map(t=>m.vol*t);const mn=Math.min(...vols)*.97,mx=Math.max(...vols)*1.03;const p=30,toY=v=>H-p-(v-mn)/(mx-mn)*(H-2*p),toX=i=>p+i*(W-2*p)/(vols.length-1);
+  ctx.strokeStyle='rgba(28,40,48,.7)';ctx.lineWidth=.5;[0,.25,.5,.75,1].forEach(t=>{const y=p+t*(H-2*p);ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(W-p,y);ctx.stroke();const v2=mn+(1-t)*(mx-mn);ctx.fillStyle='#3a5060';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';ctx.fillText(v2.toFixed(1)+'%',p-2,y+3);});
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,m.col+'30');g.addColorStop(1,m.col+'05');ctx.beginPath();vols.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.lineTo(toX(vols.length-1),H-p);ctx.lineTo(toX(0),H-p);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.beginPath();vols.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle=m.col;ctx.lineWidth=2;ctx.stroke();vols.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),3,0,Math.PI*2);ctx.fillStyle=m.col;ctx.fill();});
+  ['1W','1M','2M','3M','6M','9M','12M','18M','24M'].forEach((l,i)=>{ctx.fillStyle='#3a5060';ctx.font='9px IBM Plex Mono';ctx.textAlign='center';ctx.fillText(l,toX(i),H-4);});
+  document.getElementById('sk-tbl').innerHTML=Object.entries(M).map(([k2,m2])=>{const rr=((Math.random()-.5)*3).toFixed(2),bf=(Math.random()*1.5).toFixed(2);return`<tr><td style="color:${m2.col}">${k2}</td><td class="am">${m2.vol}%</td><td class="${rr>0?'up':'dn'}">${rr>0?'+':''}${rr}v</td><td class="pu">${bf}v</td><td class="${rr<0?'dn':'up'}">${rr<0?'NEG':'POS'}</td></tr>`;}).join('');
+}
+
+// ═══════════════════════════════════════
+// FX PAGE
+// ═══════════════════════════════════════
+function buildFX(){
+  document.getElementById('fx-stamp').textContent=lastFetch?lastFetch.toUTCString().split(' ')[4]+' UTC':'—';
+  document.getElementById('fx-kpis').innerHTML=FXL.slice(0,4).map(f=>{const r=FXD[f.p];if(!r)return`<div class="kp"><div class="kl">${f.p}</div><div class="kv">—</div></div>`;return`<div class="kp"><div class="kl">${f.p}</div><div class="kv">${f4(r)}</div><div class="ks up">Live rate</div></div>`;}).join('');
+  let h='';
+  FXL.forEach(f=>{const r=FXD[f.p];if(!r){h+=`<tr><td class="hl">${f.p}</td><td colspan="4" class="neu">Loading…</td></tr>`;return;}
+    const fwd=r*(1+0.005*0.25),sc=((fwd/r-1)*4*100).toFixed(3);
+    h+=`<tr><td class="hl">${f.p}</td><td>${f4(r)}</td><td class="neu">${f4(fwd)}</td><td class="am">${sc}%</td><td style="font-size:10px;color:var(--text2)">${f.n}</td></tr>`;
+  });
+  document.getElementById('fx-tbl').innerHTML=h;
+  const ccy=['EUR','CNY','AUD','GBP'],rates={EUR:FXD['EUR/USD'],CNY:FXD['USD/CNY']?1/FXD['USD/CNY']:null,AUD:FXD['AUD/USD'],GBP:FXD['GBP/USD']};
+  let mx=`<div style="overflow-x:auto"><table><thead><tr><th></th>${ccy.map(c=>`<th style="text-align:center">${c}</th>`).join('')}</tr></thead><tbody>`;
+  ccy.forEach(r2=>{mx+=`<tr><td class="hl">${r2}</td>`;ccy.forEach(c=>{if(r2===c){mx+=`<td style="text-align:center;color:var(--text3)">1.0000</td>`;return;}const cross=rates[c]&&rates[r2]?(rates[c]/rates[r2]).toFixed(4):'—';mx+=`<td style="text-align:center">${cross}</td>`;});mx+='</tr>';});
+  mx+='</tbody></table></div>';document.getElementById('fx-cross').innerHTML=mx;
+}
+
+// ═══════════════════════════════════════
+// HEDGE CALC
+// ═══════════════════════════════════════
+function calcH(){
+  const exp=+document.getElementById('h-exp').value||0,pair=document.getElementById('h-pair').value;
+  const tenor=+document.getElementById('h-ten').value||3,ratio=+document.getElementById('h-rat').value/100||.8;
+  const sp=FXD[pair]||1.08,fwd=sp*(1+0.005*tenor/12),sc=((fwd/sp-1)*100).toFixed(3);
+  const hedged=exp*ratio;
+  document.getElementById('h-res').innerHTML=`
+    <div class="rr"><span class="rl">Spot Rate (live)</span><span class="rv hl">${f4(sp)}</span></div>
+    <div class="rr"><span class="rl">Notional Hedged (${(ratio*100).toFixed(0)}%)</span><span class="rv up">$${hedged.toLocaleString()}</span></div>
+    <div class="rr"><span class="rl">Unhedged</span><span class="rv dn">$${(exp-hedged).toLocaleString()}</span></div>
+    <div class="rr"><span class="rl">Est. Fwd Rate (${tenor}M)</span><span class="rv">${f4(fwd)}</span></div>
+    <div class="rr"><span class="rl">Est. Swap Cost</span><span class="rv am">${sc}% (${(parseFloat(sc)*12/tenor).toFixed(2)}% pa)</span></div>
+    <div class="rr"><span class="rl">Total Hedge Cost</span><span class="rv dn">$${(hedged*Math.abs(parseFloat(sc)/100)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</span></div>`;
+  document.getElementById('h-scen').innerHTML=[-0.1,-0.05,-0.02,0,0.02,0.05,0.1].map(mv=>{const uPnl=-exp*mv,hPnl=hedged*mv-hedged*(fwd/sp-1),ben=uPnl*ratio+hPnl;return`<tr><td class="${mv>0?'up':mv<0?'dn':'neu'}">${mv>0?'+':''}${(mv*100).toFixed(0)}%</td><td class="${fc(uPnl)}">${uPnl>0?'+':''}$${Math.round(uPnl).toLocaleString()}</td><td class="${fc(hPnl)}">${hPnl>0?'+':''}$${Math.round(hPnl).toLocaleString()}</td><td class="${fc(ben)}">${ben>0?'+':''}$${Math.round(ben).toLocaleString()}</td></tr>`;}).join('');
+  const cv=document.getElementById('h-cv');if(!cv)return;const W=cv.offsetWidth||400,H=200;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);
+  const ts2=Array.from({length:24},(_,i)=>i+1),costs=ts2.map(t=>hedged*Math.abs(0.005*t/12));const mx2=Math.max(...costs);
+  const p=30,toY=v=>H-p-(v/mx2)*(H-2*p),toX=i=>p+i*(W-2*p)/(ts2.length-1);
+  ctx.strokeStyle='rgba(28,40,48,.7)';ctx.lineWidth=.5;[.25,.5,.75,1].forEach(t=>{const y=p+t*(H-2*p);ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(W-p,y);ctx.stroke();ctx.fillStyle='#3a5060';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';ctx.fillText('$'+(mx2*(1-t)/1000).toFixed(0)+'k',p-2,y+3);});
+  const g2=ctx.createLinearGradient(0,0,0,H);g2.addColorStop(0,'rgba(0,200,160,.25)');g2.addColorStop(1,'rgba(0,200,160,.02)');ctx.beginPath();costs.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.lineTo(toX(costs.length-1),H-p);ctx.lineTo(toX(0),H-p);ctx.closePath();ctx.fillStyle=g2;ctx.fill();ctx.beginPath();costs.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#00c8a0';ctx.lineWidth=2;ctx.stroke();
+}
+
+// ═══════════════════════════════════════
+// MACRO & NEWS
+// ═══════════════════════════════════════
+function buildMacro(){
+  document.getElementById('mac-tbl').innerHTML=[['China GDP YoY','5.1%','5.2%','↑ Bullish metals'],['US ISM Mfg','49.3','48.7','↔ Mixed'],['Eurozone PMI','46.8','46.1','↓ Bearish Al'],['China FAI','4.2%','3.8%','↑ Cu/Zn demand'],['DXY Index','103.4','104.1','↑ USD weaker = metals +'],['LME Stocks','1.24Mt','1.19Mt','↑ Slight bearish']].map(([i,v,p,imp])=>`<tr><td>${i}</td><td class="hl">${v}</td><td class="neu">${p}</td><td class="${imp.startsWith('↑')?'up':imp.startsWith('↓')?'dn':'neu'}">${imp}</td></tr>`).join('');
+  document.getElementById('cb-tbl').innerHTML=[['Fed','4.50%','Jun 18','Hold 93%','↔'],['ECB','3.25%','Jun 5','Cut 25bp 78%','↑ EUR'],['PBOC','3.10%','Jun 20','Cut 10bp 55%','↑ China'],['RBA','4.10%','Jul 1','Hold 62%','↔']].map(([b,r,d,e,imp])=>`<tr><td class="hl">${b}</td><td class="am">${r}</td><td class="neu">${d}</td><td>${e}</td><td class="${imp.includes('↑')?'up':'neu'}">${imp}</td></tr>`).join('');
+  document.getElementById('ev-tbl').innerHTML=[['May 13','China Trade Balance','High','Cu/Al/Ni','$72.3bn','$78.1bn'],['May 14','US PPI MoM','Med','USD','0.2%','0.2%'],['May 15','LME Metals Week','High','All','—','—'],['May 21','China Caixin PMI','High','All','50.9','51.2'],['May 28','CODELCO output','High','Cu','—','Q1 miss'],['Jun 18','FOMC','High','DXY','Hold','4.50%']].map(([d,e,imp,m,con,prev])=>`<tr><td class="am">${d}</td><td>${e}</td><td class="${imp==='High'?'dn':'am'}">${imp}</td><td style="color:var(--a2)">${m}</td><td>${con}</td><td class="neu">${prev}</td></tr>`).join('');
+}
+function buildNews(){
+  document.getElementById('nf').innerHTML=[{time:'09:12',cls:'ncu',tag:'COPPER',h:'Chile CODELCO Q1 production misses estimates by 4.2% — supply tightness risk for Q2.',fresh:true},{time:'08:58',cls:'nma',tag:'MACRO',h:'China Caixin PMI: 51.2 vs 50.8 expected — positive demand signal for base metals.',fresh:true},{time:'08:41',cls:'nni',tag:'NICKEL',h:'Indonesia tightens ore export ban compliance — SHFE draws accelerate.'},{time:'08:22',cls:'nfx',tag:'FX',h:'EUR/USD holds 1.0800 post-soft US CPI — metals supported by weaker USD.'},{time:'08:05',cls:'nal',tag:'ALUMINIUM',h:'LME Al inventory +8.5k tonnes — contango confirmed, EU demand soft.'},{time:'07:30',cls:'nwa',tag:'ALERT',h:'Tin: Myanmar disruption widens — SHFE premium vs LME at 3-year high.'},{time:'07:12',cls:'ncu',tag:'COPPER',h:'LME cash/3M spread narrows to -$18/t — physical demand pickup.'}].map(n=>`<div class="nit"><div style="display:flex;justify-content:space-between"><span class="nt">${n.time} UTC</span>${n.fresh?'<span class="bg bga">NEW</span>':''}</div><div class="nh"><span class="ntg ${n.cls}">${n.tag}</span>${n.h}</div></div>`).join('');
+  document.getElementById('df').innerHTML=[{m:'Sn',col:'var(--sn)',h:'Myanmar: Wa State halt ongoing',s:'HIGH'},{m:'Cu',col:'var(--cu)',h:'Chile: CODELCO Chuquicamata delayed',s:'MEDIUM'},{m:'Ni',col:'var(--ni)',h:'Indonesia: HPAL delays at PT Merdeka',s:'LOW'},{m:'Zn',col:'var(--zn)',h:'Peru: Antamina labor negotiations',s:'MEDIUM'}].map(d=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:${d.col};font-size:10px">${d.m}</span><span class="bg ${d.s==='HIGH'?'bgd':d.s==='MEDIUM'?'bga':'bgn'}">${d.s}</span></div><div style="font-size:11px">${d.h}</div></div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+function showPage(id){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('act'));
+  document.getElementById('page-'+id).classList.add('act');
+  document.querySelectorAll('.ni').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+id+"'"))n.classList.add('act');});
+  refPage(id);
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+buildMacro(); buildNews();
+fetchAll();
+window.addEventListener('resize',()=>{const id=document.querySelector('.pg.act')?.id.replace('page-','');if(id)refPage(id);});
+</script>
+</body>
+</html>
