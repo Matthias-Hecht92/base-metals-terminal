@@ -1078,6 +1078,202 @@ window.addEventListener('resize', () => {
   const id = document.querySelector('.pg.act')?.id.replace('page-', '');
   if (id) refPage(id);
 });
+
+// ═══════════════════════════════════════════════════════════════
+// STATIC DATA LOADER
+// ═══════════════════════════════════════════════════════════════
+
+let _marketData = null;
+let _cftcData = null;
+let _stocksData = null;
+let _historyData = null;
+
+async function loadStaticData() {
+  try {
+    const [market, cftc, stocks, history] = await Promise.all([
+      fetch('data/market-data.json').then(r => r.json()),
+      fetch('data/cftc-data.json').then(r => r.json()),
+      fetch('data/stocks-data.json').then(r => r.json()),
+      fetch('data/history-data.json').then(r => r.json())
+    ]);
+
+    _marketData = market;
+    _cftcData = cftc;
+    _stocksData = stocks;
+    _historyData = history;
+
+    console.log('Static data loaded');
+  } catch(err) {
+    console.error(err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHOW PAGE OVERRIDE
+// ═══════════════════════════════════════════════════════════════
+
+const _originalShowPage = showPage;
+
+showPage = function(id) {
+
+  _originalShowPage(id);
+
+  if(id === 'stocks') {
+    renderStocks();
+  }
+
+  if(id === 'cftc') {
+    renderCftcCharts();
+  }
+
+  if(id === 'history') {
+    renderHistoryChart();
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STOCKS
+// ═══════════════════════════════════════════════════════════════
+
+function renderStocks() {
+
+  const el = document.getElementById('stocks-content');
+
+  if(!_stocksData || !_stocksData.data) {
+    el.innerHTML = `
+      <div class="pn" style="padding:20px">
+        No stocks data loaded yet
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+
+  Object.entries(_stocksData.data).forEach(([metal, d]) => {
+
+    html += `
+      <div class="pn" style="margin-bottom:10px;padding:12px">
+        <div style="font-size:12px;color:var(--text)">
+          ${metal}
+        </div>
+
+        <div style="margin-top:8px;font-size:10px;color:var(--text2)">
+          LME: ${d.stocks?.toLocaleString() || '-'} t
+        </div>
+
+        <div style="font-size:10px;color:var(--text2)">
+          SHFE: ${d.shfe?.toLocaleString() || '-'} t
+        </div>
+
+        <div style="font-size:10px;color:var(--text2)">
+          Total: ${d.total?.toLocaleString() || '-'} t
+        </div>
+      </div>
+    `;
+  });
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CFTC
+// ═══════════════════════════════════════════════════════════════
+
+function renderCftcCharts() {
+
+  if(!_cftcData || !_cftcData.data) return;
+
+  const metal = document.getElementById('cftc-metal').value;
+
+  const data = _cftcData.data[metal];
+
+  if(!data) return;
+
+  const series = data.series || [];
+
+  Plotly.newPlot('cftc-net-chart', [{
+    x: series.map(x => x.date),
+    y: series.map(x => x.mm_net),
+    type: 'scatter',
+    mode: 'lines',
+    line: {
+      color: '#40d090'
+    }
+  }], {
+    paper_bgcolor:'#0c1015',
+    plot_bgcolor:'#0c1015',
+    font:{color:'#c8d4dc'}
+  });
+
+  Plotly.newPlot('cftc-ls-chart', [{
+    x: series.map(x => x.date),
+    y: series.map(x => x.mm_long),
+    name:'Long',
+    type:'bar'
+  },{
+    x: series.map(x => x.date),
+    y: series.map(x => x.mm_short),
+    name:'Short',
+    type:'bar'
+  }], {
+    barmode:'group',
+    paper_bgcolor:'#0c1015',
+    plot_bgcolor:'#0c1015',
+    font:{color:'#c8d4dc'}
+  });
+
+  document.getElementById('cftc-updated').innerText =
+    data.updated || '';
+
+  const latest = data.latest || {};
+
+  document.getElementById('cftc-snapshot').innerHTML = `
+    <div class="kp">
+      <div class="kl">MM NET</div>
+      <div class="kv">${latest.mm_net || 0}</div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════════════
+
+function renderHistoryChart() {
+
+  if(!_historyData || !_historyData.data) return;
+
+  const metal = document.getElementById('hist-metal').value;
+  const period = document.getElementById('hist-period').value;
+
+  const data = _historyData.data[metal]?.[period];
+
+  if(!data) return;
+
+  Plotly.newPlot('hist-main-chart', [{
+    x: data.map(x => x.date),
+    y: data.map(x => x.close),
+    type:'scatter',
+    mode:'lines',
+    line:{
+      color:'#f0a020'
+    }
+  }], {
+    paper_bgcolor:'#0c1015',
+    plot_bgcolor:'#0c1015',
+    font:{color:'#c8d4dc'}
+  });
+
+  document.getElementById('hist-title').innerText =
+    `${metal} — ${period}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+
+loadStaticData();
 </script>
 </body>
 </html>
