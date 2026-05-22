@@ -1,1 +1,37 @@
+name: Fetch Market Data
 
+on:
+  schedule:
+    - cron: '0 6 * * *'      # Daily 06:00 UTC
+    - cron: '0 12 * * 1-5'   # Weekdays 12:00 UTC (midday refresh)
+  workflow_dispatch:           # Allow manual trigger
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install yfinance requests pandas numpy
+
+      - name: Run data fetch
+        run: python scripts/fetch_data.py
+
+      - name: Commit & push JSON files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/*.json
+          git diff --staged --quiet || git commit -m "chore: update market data $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
