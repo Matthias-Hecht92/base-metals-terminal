@@ -301,7 +301,142 @@ canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
         <div class="pn"><div class="ph"><span class="pt">Supply Disruptions</span></div><div class="pb"><div id="df"></div></div></div>
       </div>
     </div>
+<div id="page-stocks" class="pg">
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px">
+    <h2 style="font-size:14px;letter-spacing:2px;color:var(--text)">Warehouse Stocks</h2>
+    <span style="font-size:9px;letter-spacing:2px;color:var(--text3)">LME + SHFE // TONNES</span>
+  </div>
+  <div id="stocks-content">
+    <div class="pn" style="padding:20px;color:var(--text2);font-size:11px;">
+      Loading stock data...
+    </div>
+  </div>
+</div>
 
+<div id="page-cftc" class="pg">
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px">
+    <h2 style="font-size:14px;letter-spacing:2px;color:var(--text)">CFTC Positioning</h2>
+    <span style="font-size:9px;letter-spacing:2px;color:var(--text3)">
+      COMMITMENTS OF TRADERS // WEEKLY
+    </span>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+    <div class="md">METAL</div>
+
+    <select id="cftc-metal"
+      onchange="renderCftcCharts()"
+      style="background:var(--bg2);color:var(--text);
+      border:1px solid var(--border);padding:4px 10px;
+      font-family:var(--fm);font-size:11px;border-radius:2px;cursor:pointer">
+
+      <option value="Cu">Copper</option>
+      <option value="Zn">Zinc</option>
+      <option value="Al">Aluminium</option>
+      <option value="Ni">Nickel</option>
+      <option value="Pb">Lead</option>
+    </select>
+  </div>
+
+  <div class="g2" style="margin-bottom:12px">
+    <div class="pn">
+      <div class="ph">
+        <span class="pt">Net Positioning — Managed Money</span>
+      </div>
+
+      <div id="cftc-net-chart" style="height:280px;padding:8px"></div>
+    </div>
+
+    <div class="pn">
+      <div class="ph">
+        <span class="pt">Long / Short Breakdown</span>
+      </div>
+
+      <div id="cftc-ls-chart" style="height:280px;padding:8px"></div>
+    </div>
+  </div>
+
+  <div class="pn">
+    <div class="ph">
+      <span class="pt">Latest Snapshot</span>
+      <span class="pk" id="cftc-updated"></span>
+    </div>
+
+    <div id="cftc-snapshot" style="padding:14px"></div>
+  </div>
+</div>
+
+<div id="page-history" class="pg">
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px">
+    <h2 style="font-size:14px;letter-spacing:2px;color:var(--text)">Price Charts</h2>
+    <span style="font-size:9px;letter-spacing:2px;color:var(--text3)">
+      HISTORICAL PRICES // DAILY
+    </span>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+
+    <select id="hist-metal"
+      onchange="renderHistoryChart()"
+      style="background:var(--bg2);color:var(--text);
+      border:1px solid var(--border);padding:4px 10px;
+      font-family:var(--fm);font-size:11px;border-radius:2px;cursor:pointer">
+
+      <option value="Cu">Copper</option>
+      <option value="Al">Aluminium</option>
+      <option value="Ni">Nickel</option>
+      <option value="Zn">Zinc</option>
+      <option value="Pb">Lead</option>
+      <option value="Sn">Tin</option>
+    </select>
+
+    <select id="hist-period"
+      onchange="renderHistoryChart()"
+      style="background:var(--bg2);color:var(--text);
+      border:1px solid var(--border);padding:4px 10px;
+      font-family:var(--fm);font-size:11px;border-radius:2px;cursor:pointer">
+
+      <option value="1y">1 Year</option>
+      <option value="5y">5 Years</option>
+    </select>
+
+    <select id="hist-type"
+      onchange="renderHistoryChart()"
+      style="background:var(--bg2);color:var(--text);
+      border:1px solid var(--border);padding:4px 10px;
+      font-family:var(--fm);font-size:11px;border-radius:2px;cursor:pointer">
+
+      <option value="line">Line</option>
+      <option value="candlestick">Candlestick</option>
+    </select>
+  </div>
+
+  <div class="pn" style="margin-bottom:12px">
+    <div class="ph">
+      <span class="pt" id="hist-title">Copper — 1 Year</span>
+    </div>
+
+    <div id="hist-main-chart" style="height:380px;padding:8px"></div>
+  </div>
+
+  <div class="g2">
+    <div class="pn">
+      <div class="ph">
+        <span class="pt">Relative Performance YTD (%)</span>
+      </div>
+
+      <div id="hist-perf-chart" style="height:260px;padding:8px"></div>
+    </div>
+
+    <div class="pn">
+      <div class="ph">
+        <span class="pt">All Metals — 1Y Overlay</span>
+      </div>
+
+      <div id="hist-overlay-chart" style="height:260px;padding:8px"></div>
+    </div>
+  </div>
+</div>
   </main>
 </div>
 
