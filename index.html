@@ -1565,48 +1565,25 @@ async function buildMacro() {
 // Copper COMEX code: 085692
 // ═══════════════════════════════════════════════
 async function buildCOT() {
-  const contracts = [
-    { code:'085692', name:'Copper (COMEX)',    col:'var(--cu)' },
-    { code:'034699', name:'Aluminium (LME)',   col:'var(--al)' },
-    { code:'086666', name:'Nickel (LME)',      col:'var(--ni)' },
-    { code:'034691', name:'Zinc (LME)',        col:'var(--zn)' },
-  ];
-
   try {
-    const rows = await Promise.all(contracts.map(async c => {
-      // CFTC public Socrata API — no auth needed
-      const url = `https://publicreporting.cftc.gov/resource/jun7-ma8e.json?cftc_commodity_code=${c.code}&$order=report_date_as_yyyy_mm_dd DESC&$limit=2`;
-      const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      const data = await r.json();
-      if (!data || data.length < 1) return null;
+    // Fetch via our Vercel proxy (handles CORS + correct field names)
+    const r = await fetch('https://base-metals-terminal.vercel.app/api/quote?cot=true', {
+      signal: AbortSignal.timeout(15000)
+    });
+    const d = await r.json();
+    const rows = d.cot || [];
 
-      const latest = data[0];
-      const prev   = data[1];
+    if (!rows.length) throw new Error('No COT data returned');
 
-      const longL  = parseInt(latest.noncomm_positions_long_all  || 0);
-      const shortL = parseInt(latest.noncomm_positions_short_all || 0);
-      const net    = longL - shortL;
-      const netP   = prev ? parseInt(prev.noncomm_positions_long_all||0) - parseInt(prev.noncomm_positions_short_all||0) : net;
-      const chg    = net - netP;
-      const sig    = net > 0 ? 'NET LONG' : 'NET SHORT';
-      const sigCls = net > 0 ? 'up' : 'dn';
-      const date   = latest.report_date_as_yyyy_mm_dd?.split('T')[0] || '—';
-
-      return { name: c.name, col: c.col, longL, shortL, net, chg, sig, sigCls, date };
-    }));
-
-    const valid = rows.filter(Boolean);
-    if (valid.length === 0) throw new Error('No COT data');
-
-    document.getElementById('cot-stamp').textContent = `CFTC — ${valid[0]?.date}`;
-    document.getElementById('cot-tbl').innerHTML = valid.map(r =>
+    document.getElementById('cot-stamp').textContent = `CFTC — ${rows[0]?.date || '—'}`;
+    document.getElementById('cot-tbl').innerHTML = rows.map(r =>
       `<tr>
         <td><span style="color:${r.col}">●</span> ${r.name}</td>
         <td class="up">${(r.longL/1000).toFixed(1)}k</td>
         <td class="dn">${(r.shortL/1000).toFixed(1)}k</td>
         <td class="${r.net>0?'up':'dn'}">${r.net>0?'+':''}${(r.net/1000).toFixed(1)}k</td>
         <td class="${r.chg>0?'up':'dn'}">${r.chg>0?'+':''}${(r.chg/1000).toFixed(1)}k</td>
-        <td><span class="sg ${r.net>0?'slo':'ssh'}">${r.sig}</span></td>
+        <td><span class="sg ${r.net>0?'slo':'ssh'}">${r.net>0?'NET LONG':'NET SHORT'}</span></td>
       </tr>`
     ).join('');
   } catch(e) {
@@ -1615,58 +1592,42 @@ async function buildCOT() {
 }
 
 // ═══════════════════════════════════════════════
-// NEWS — live RSS via rss2json + Polymarket
+// NEWS — via Vercel proxy (parses RSS server-side, no CORS)
 // ═══════════════════════════════════════════════
 async function buildNews() {
-  // Fetch news from Mining.com RSS (metals focused, free)
-  const RSS_FEEDS = [
-    'https://www.mining.com/feed/',
-    'https://www.kitco.com/rss/metals-news.rss',
-  ];
-  const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
-
   document.getElementById('news-stamp').textContent = 'loading…';
 
-  let items = [];
-  for (const feed of RSS_FEEDS) {
-    try {
-      const r = await fetch(`${RSS2JSON}${encodeURIComponent(feed)}&count=8`, {
-        signal: AbortSignal.timeout(6000)
-      });
-      const d = await r.json();
-      if (d.status === 'ok' && d.items?.length) {
-        items = [...items, ...d.items.map(i => ({
-          title: i.title,
-          link:  i.link,
-          date:  new Date(i.pubDate),
-          src:   new URL(feed).hostname.replace('www.',''),
-        }))];
-      }
-    } catch(e) { /* try next */ }
+  try {
+    // Fetch news via our Vercel proxy — parses Mining.com + Kitco RSS server-side
+    const r = await fetch('https://base-metals-terminal.vercel.app/api/quote?news=true', {
+      signal: AbortSignal.timeout(12000)
+    });
+    const d = await r.json();
+    const items = d.news || [];
+
+    if (items.length > 0) {
+      document.getElementById('news-stamp').textContent = `${items[0].src} — ${new Date().toUTCString().split(' ')[4]} UTC`;
+      document.getElementById('nf').innerHTML = items.map(n => {
+        const date = n.date ? new Date(n.date) : new Date();
+        const age = Math.round((Date.now() - date) / 60000);
+        const ageStr = age < 60 ? `${age}m ago` : `${Math.round(age/60)}h ago`;
+        const isNew = age < 180;
+        return `<div class="nit">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="nt2">${ageStr} · ${n.src}</span>
+            ${isNew ? '<span class="bg bga">NEW</span>' : ''}
+          </div>
+          <div class="nh"><a href="${n.link}" target="_blank" style="color:var(--text);text-decoration:none;hover:underline">${n.title}</a></div>
+        </div>`;
+      }).join('');
+    } else {
+      document.getElementById('nf').innerHTML = '<div style="color:var(--text3);font-size:11px">News feeds temporarily unavailable</div>';
+    }
+  } catch(e) {
+    document.getElementById('nf').innerHTML = `<div style="color:var(--text3);font-size:11px">News unavailable: ${e.message}</div>`;
   }
 
-  // Sort by date desc
-  items.sort((a,b) => b.date - a.date);
-
-  if (items.length > 0) {
-    document.getElementById('news-stamp').textContent = `${items[0].src} — ${new Date().toUTCString().split(' ')[4]} UTC`;
-    document.getElementById('nf').innerHTML = items.slice(0,10).map(n => {
-      const age = Math.round((Date.now() - n.date) / 60000);
-      const ageStr = age < 60 ? `${age}m ago` : `${Math.round(age/60)}h ago`;
-      const isNew = age < 120;
-      return `<div class="nit">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="nt2">${ageStr} · ${n.src}</span>
-          ${isNew ? '<span class="bg bga">NEW</span>' : ''}
-        </div>
-        <div class="nh"><a href="${n.link}" target="_blank" style="color:var(--text);text-decoration:none">${n.title}</a></div>
-      </div>`;
-    }).join('');
-  } else {
-    document.getElementById('nf').innerHTML = '<div style="color:var(--text3);font-size:11px">RSS feeds unavailable</div>';
-  }
-
-  // Polymarket
+  // Polymarket — direct API (CORS-enabled)
   buildPolymarket();
 }
 
