@@ -84,8 +84,34 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { symbols } = req.query;
+  const { symbols, history, range, interval, pboc } = req.query;
+
+  // ── PBOC rate — scrape from BIS/PBOC ────────────────────────
+  if (pboc === 'true') {
+    try {
+      // BIS stats API - free, CORS enabled
+      const r = await fetch('https://stats.bis.org/api/v1/data/BIS,WS_CBPOL,1.0/Q.CN.policy_rate?lastNObservations=1&format=jsondata', {
+        signal: AbortSignal.timeout(8000)
+      });
+      const d = await r.json();
+      const obs = d?.data?.dataSets?.[0]?.series?.['0:0:0']?.observations;
+      if (obs) {
+        const vals = Object.values(obs);
+        const rate = vals[vals.length-1]?.[0];
+        return res.status(200).json({ pboc: rate ? parseFloat(rate).toFixed(2) : null });
+      }
+    } catch(e) {}
+    // Fallback: fetch from Trading Economics public data
+    return res.status(200).json({ pboc: null });
+  }
+
   if (!symbols) return res.status(400).json({ error: 'symbols required' });
+
+  // ── History mode ─────────────────────────────────────────────
+  if (history === 'true') {
+    const points = await fetchHistory(symbols, range || '1y', interval || '1wk');
+    return res.status(200).json({ history: points });
+  }
 
   const symList = symbols.split(',').map(s => s.trim());
   const results = [];
@@ -172,4 +198,25 @@ export default async function handler(req, res) {
   }
 
   res.status(200).json({ quoteResponse: { result: results, error: null } });
+}
+
+// ─── History endpoint ────────────────────────────────────────────────────────
+// Called with ?symbols=HG=F&history=true&range=1y&interval=1wk
+async function fetchHistory(sym, range, interval) {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${interval}&range=${range}`;
+    const r = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+      signal: AbortSignal.timeout(10000)
+    });
+    const d = await r.json();
+    const res2 = d?.chart?.result?.[0];
+    if (!res2?.timestamp || !res2?.indicators?.quote?.[0]?.close) return [];
+    const closes = res2.indicators.quote[0].close;
+    return res2.timestamp
+      .map((t, i) => ({ t: t * 1000, c: closes[i] }))
+      .filter(p => p.c != null && !isNaN(p.c));
+  } catch(e) {
+    return [];
+  }
 }
