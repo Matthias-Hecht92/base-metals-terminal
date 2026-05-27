@@ -10,14 +10,13 @@
   --bg:#f4f7fb;--bg1:#ffffff;--bg2:#f0f5fa;--border:#dde8f2;--border2:#b8cfe6;
   --text:#1a3a5c;--text2:#4a6a8a;--text3:#8a9ab0;
   --accent:#2e6ea6;--a2:#1a3a5c;--warn:#e07b00;--danger:#c62828;
+  --up:#1b5e20;--dn:#c62828;
   --cu:#1a3a5c;--al:#2e6ea6;--ni:#4a8fc0;--zn:#6aaed4;--pb:#5a9abf;--sn:#7ab0cf;
   --mts:#1a3a5c;--mts2:#2e6ea6;--mts3:#4a8fc0;
   --fm:'IBM Plex Mono',monospace;--fs:'Inter',sans-serif
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:var(--fs);font-size:12px;line-height:1.5;overflow-x:hidden}
-
-/* TOPBAR */
 #topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:54px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(26,58,92,.06)}
 .logo{font-size:13px;font-weight:600;color:var(--mts)}.logo span{color:var(--text2)}
 .tr{display:flex;align-items:center;gap:14px}
@@ -25,39 +24,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--fs);font-size:12px
 .ld.w{background:var(--warn)}.ld.e{background:var(--danger)}
 @keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
 .tb{color:var(--text2);font-size:11px}.tbv{font-size:11px;font-weight:600;color:var(--mts)}
-
-/* HORIZONTAL NAV */
 #navbar{background:var(--mts);display:flex;align-items:stretch;padding:0 20px;position:sticky;top:54px;z-index:99;overflow-x:auto}
 #navbar::-webkit-scrollbar{height:0}
-.nv{padding:0 14px;height:36px;display:flex;align-items:center;cursor:pointer;color:rgba(255,255,255,.5);font-size:11px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;user-select:none;font-family:var(--fs)}
-.nv:hover{color:rgba(255,255,255,.85)}
-.nv.act{color:#fff;border-bottom-color:#fff;font-weight:500}
-
-/* STATUS BAR */
-#ds{background:var(--bg2);border-bottom:1px solid var(--border);padding:3px 20px;display:flex;align-items:center;gap:20px;font-size:10px;color:var(--text3);font-family:var(--fm)}
+.nv{padding:0 14px;height:36px;display:flex;align-items:center;cursor:pointer;color:rgba(255,255,255,.5);font-size:11px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;user-select:none}
+.nv:hover{color:rgba(255,255,255,.85)}.nv.act{color:#fff;border-bottom-color:#fff;font-weight:500}
+#ds{background:var(--bg2);border-bottom:1px solid var(--border);padding:3px 20px;display:flex;align-items:center;gap:16px;font-size:10px;color:var(--text3);font-family:var(--fm)}
 #ds span{color:var(--text2)}
-
-/* LAYOUT — no sidebar */
 #layout{display:block;height:calc(100vh - 93px);overflow:hidden}
 #sb{display:none!important}
 #main{height:100%;overflow-y:auto}.pg{display:none;padding:20px}.pg.act{display:block}
-
-/* PANELS */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .pn{background:#fff;border:0.5px solid var(--border);border-radius:4px}
 .ph{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:#fafcff}
-.pt{font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;font-family:var(--fm)}
-.pk{font-size:9px;color:var(--text3)}
+.pt{font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;font-family:var(--fm)}.pk{font-size:9px;color:var(--text3)}
 .pb{padding:12px 14px}
-
-/* KPI CARDS */
 .kp{background:#fff;border:0.5px solid var(--border);border-radius:4px;padding:12px 14px;border-top:3px solid var(--mts2)}
 .kl{font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:6px;font-family:var(--fm)}
 .kv{font-size:20px;font-weight:600;color:var(--mts)}.ks{font-size:10px;margin-top:3px}
-
-/* TABLES */
 .tw{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
 th{font-size:9px;letter-spacing:1px;color:var(--text3);text-align:right;padding:7px 10px;border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap;background:#f8fafc;font-family:var(--fm)}
@@ -65,130 +48,52 @@ th:first-child{text-align:left}
 td{padding:7px 10px;text-align:right;border-bottom:1px solid #f0f5fa;font-size:11px;white-space:nowrap;vertical-align:middle;font-family:var(--fm)}
 td:first-child{text-align:left}
 tr:hover td{background:#f5f9ff}tr:last-child td{border-bottom:none}
-
-/* COLORS */
-.up{color:#1b5e20;font-weight:500}.dn{color:#c62828;font-weight:500}.neu{color:var(--text2)}
-.hl{color:var(--mts2);font-weight:500}.am{color:var(--warn)}.pu{color:#6a1b9a}
-
-/* BADGES */
+.up{color:#1b5e20;font-weight:500}.dn{color:#c62828;font-weight:500}.neu{color:var(--text2)}.hl{color:var(--mts2);font-weight:500}.am{color:var(--warn)}.pu{color:#6a1b9a}
 .bg{display:inline-block;padding:2px 7px;border-radius:2px;font-size:9px;font-family:var(--fm)}
-.bgu{background:#e8f5e9;color:#1b5e20;border:1px solid #c8e6c9}
-.bgd{background:#fde8e8;color:#c62828;border:1px solid #ffcdd2}
-.bgn{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}
-.bga{background:#fff8e1;color:var(--warn);border:1px solid #ffe082}
-
-/* FORMS */
+.bgu{background:#e8f5e9;color:#1b5e20;border:1px solid #c8e6c9}.bgd{background:#fde8e8;color:#c62828;border:1px solid #ffcdd2}
+.bgn{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}.bga{background:#fff8e1;color:var(--warn);border:1px solid #ffe082}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .fl{font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;font-family:var(--fm)}
 input[type=number],select{width:100%;background:#fff;border:1px solid var(--border2);color:var(--text);padding:6px 10px;font-family:var(--fm);font-size:11px;border-radius:3px;outline:none;-moz-appearance:textfield}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 input:focus,select:focus{border-color:var(--mts2);box-shadow:0 0 0 2px rgba(46,110,166,.12)}
 select option{background:#fff;color:var(--text)}
-
-/* RESULT BOXES */
 .rb{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 12px;margin-top:10px}
-.rr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
-.rr:last-child{border-bottom:none}
-.rl{font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;font-family:var(--fm)}
-.rv{font-size:12px;font-weight:500;color:var(--mts)}
-
-/* GREEKS */
+.rr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}.rr:last-child{border-bottom:none}
+.rl{font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;font-family:var(--fm)}.rv{font-size:12px;font-weight:500;color:var(--mts)}
 .gg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
 .gb{background:var(--bg2);border:1px solid var(--border);padding:8px 6px;text-align:center;border-radius:3px}
 .gs{font-size:10px;color:var(--text3);margin-bottom:3px}.gv{font-size:12px;font-weight:600;color:var(--mts2)}
-
-/* CANVAS */
-canvas{display:block;width:100%;background:#fff;border-radius:3px;border:0.5px solid var(--border)}
-
-/* VOL CELLS */
+canvas{display:block;width:100%;background:#fff;border-radius:3px}
 .vc{display:inline-block;padding:3px 5px;border-radius:2px;font-size:10px;text-align:center;min-width:50px;font-family:var(--fm)}
-
-/* NEWS */
 .nit{border-bottom:1px solid var(--border);padding:10px 0}.nit:last-child{border-bottom:none}
 .nt2{font-size:9px;color:var(--text3)}.nh{font-size:11px;color:var(--text);margin-top:3px;line-height:1.4}
 .ntg{display:inline-block;padding:1px 6px;border-radius:2px;font-size:9px;margin-right:5px}
-.ncu{background:#fff3e0;color:#bf360c}.nal{background:#e3f2fd;color:#0d47a1}
-.nni{background:#f3e5f5;color:#4a148c}.nma{background:#e3f2fd;color:#1565c0}
-.nfx{background:#e0f7fa;color:#006064}.nwa{background:#fde8e8;color:#c62828}
-
-/* MISC */
+.ncu{background:#fff3e0;color:#bf360c}.nal{background:#e3f2fd;color:#0d47a1}.nni{background:#f3e5f5;color:#4a148c}
+.nma{background:#e3f2fd;color:#1565c0}.nfx{background:#e0f7fa;color:#006064}.nwa{background:#fde8e8;color:#c62828}
 .dl{height:1px;background:var(--border);margin:14px 0}
 .sh{display:flex;align-items:baseline;gap:10px;margin-bottom:16px}
-.st{font-size:15px;font-weight:600;color:var(--mts);font-family:var(--fs)}
-.ss{font-size:10px;color:var(--text3);letter-spacing:1px;font-family:var(--fm)}
-.sg{display:inline-block;padding:2px 8px;font-size:9px;letter-spacing:.5px;border-radius:3px;font-weight:600}
+.st{font-size:15px;font-weight:600;color:var(--mts);font-family:var(--fs)}.ss{font-size:10px;color:var(--text3);letter-spacing:1px;font-family:var(--fm)}
+.sg{display:inline-block;padding:2px 8px;font-size:9px;border-radius:3px;font-weight:600}
 .slo{background:#e8f5e9;color:#1b5e20}.ssh{background:#fde8e8;color:#c62828}.sne{background:var(--bg2);color:var(--text2)}
 .sp2{display:inline-block;width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--mts2);border-radius:50%;animation:sp .8s linear infinite;margin-right:6px;vertical-align:middle}
 @keyframes sp{to{transform:rotate(360deg)}}
 .wb{background:#fff8e1;border:1px solid #ffe082;border-radius:3px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#e07b00}
-.err-box{background:#fde8e8;border:1px solid #ffcdd2;border-radius:3px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#c62828}
 .perf-btn{background:#fff;border:1px solid var(--border2);color:var(--text2);padding:3px 10px;font-family:var(--fm);font-size:9px;cursor:pointer;border-radius:2px;transition:all .15s}
-.perf-btn:hover{color:var(--mts);border-color:var(--mts2)}
-.perf-btn.act{background:var(--mts);color:#fff;border-color:var(--mts)}
+.perf-btn:hover{color:var(--mts);border-color:var(--mts2)}.perf-btn.act{background:var(--mts);color:#fff;border-color:var(--mts)}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.pn{background:var(--bg1);border:1px solid var(--border);border-radius:3px}
-.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
-.pt{font-size:9px;letter-spacing:2px;color:var(--text2);text-transform:uppercase}.pk{font-size:9px;color:var(--text3)}
-.pb{padding:12px 14px}
-.kp{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:12px 14px}
-.kl{font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:4px}
-.kv{font-size:20px;font-weight:600;letter-spacing:1px}.ks{font-size:10px;margin-top:3px}
-.tw{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-th{font-size:9px;letter-spacing:1px;color:var(--text3);text-align:right;padding:6px 10px;border-bottom:1px solid var(--border);font-weight:400;white-space:nowrap}
-th:first-child{text-align:left}
-td{padding:6px 10px;text-align:right;border-bottom:1px solid rgba(28,40,48,.5);font-size:11px;white-space:nowrap;vertical-align:middle}
-td:first-child{text-align:left}
-tr:hover td{background:rgba(255,255,255,.02)}tr:last-child td{border-bottom:none}
-.up{color:#30d090}.dn{color:#e05060}.neu{color:var(--text2)}.hl{color:var(--a2)}.am{color:var(--warn)}.pu{color:#b080f0}
-.bg{display:inline-block;padding:2px 7px;border-radius:2px;font-size:9px}
-.bgu{background:rgba(48,208,144,.12);color:#30d090;border:1px solid rgba(48,208,144,.2)}
-.bgd{background:rgba(224,80,96,.12);color:#e05060;border:1px solid rgba(224,80,96,.2)}
-.bgn{background:rgba(100,128,144,.1);color:var(--text2);border:1px solid var(--border)}
-.bga{background:rgba(240,160,32,.1);color:var(--warn);border:1px solid rgba(240,160,32,.2)}
-.fr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-.fl{font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:4px}
-input[type=number],select{width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:6px 10px;font-family:var(--fm);font-size:11px;border-radius:2px;outline:none;-moz-appearance:textfield}
-input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
-input:focus,select:focus{border-color:var(--a2)}select option{background:var(--bg2)}
-.rb{background:var(--bg);border:1px solid var(--border);border-radius:2px;padding:10px 12px;margin-top:10px}
-.rr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(28,40,48,.6)}
-.rr:last-child{border-bottom:none}.rl{font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase}.rv{font-size:12px;font-weight:600}
-.gg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
-.gb{background:var(--bg);border:1px solid var(--border);padding:8px 6px;text-align:center;border-radius:2px}
-.gs{font-size:11px;color:var(--text2);margin-bottom:3px}.gv{font-size:12px;font-weight:600;color:#b080f0}
-canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
-.vc{display:inline-block;padding:3px 5px;border-radius:1px;font-size:10px;text-align:center;min-width:50px}
-.nit{border-bottom:1px solid var(--border);padding:10px 0}.nit:last-child{border-bottom:none}
-.nt2{font-size:9px;color:var(--text3)}.nh{font-size:11px;color:var(--text);margin-top:3px;line-height:1.4}
-.ntg{display:inline-block;padding:1px 6px;border-radius:1px;font-size:9px;margin-right:5px}
-.ncu{background:rgba(240,160,32,.15);color:var(--cu)}.nal{background:rgba(96,176,240,.12);color:var(--al)}
-.nni{background:rgba(176,128,240,.12);color:var(--ni)}.nma{background:rgba(0,144,240,.1);color:var(--a2)}
-.nfx{background:rgba(0,200,160,.1);color:var(--accent)}.nwa{background:rgba(224,64,64,.1);color:var(--danger)}
-.dl{height:1px;background:var(--border);margin:14px 0}
-.sh{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
-.st{font-size:16px;font-weight:500;letter-spacing:1px;font-family:var(--fs);color:var(--text)}
-.ss{font-size:10px;color:var(--text3);letter-spacing:1px}
-.sg{display:inline-block;padding:2px 8px;font-size:9px;letter-spacing:1px;border-radius:1px;font-weight:600}
-.slo{background:rgba(48,208,144,.15);color:#30d090}.ssh{background:rgba(224,64,64,.15);color:#e05060}.sne{background:rgba(100,128,144,.1);color:var(--text2)}
-.sp2{display:inline-block;width:10px;height:10px;border:1px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;margin-right:6px;vertical-align:middle}
-@keyframes sp{to{transform:rotate(360deg)}}
-.wb{background:rgba(240,160,32,.07);border:1px solid rgba(240,160,32,.2);border-radius:3px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--warn)}
-.err-box{background:rgba(224,64,64,.07);border:1px solid rgba(224,64,64,.2);border-radius:3px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--danger)}
-::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg1)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 </style>
 </head>
 <body>
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:12px">
-    <img src="logo.jpeg" height="38" style="object-fit:contain;display:block">
-    <div style="width:1px;height:30px;background:#dde8f2"></div>
+    <img src="logo.jpeg" height="36" style="object-fit:contain;display:block">
+    <div style="width:1px;height:28px;background:#dde8f2"></div>
     <div>
-      <div style="font-size:11px;font-weight:600;color:#1a3a5c;letter-spacing:.3px">Metal Trading <span style="color:#2e6ea6">SAS</span></div>
+      <div style="font-size:12px;font-weight:600;color:#1a3a5c">Metal Trading <span style="color:#2e6ea6">SAS</span></div>
       <div style="font-size:9px;color:#8a9ab0;letter-spacing:1.5px;text-transform:uppercase">Base Metals & FX Terminal · Paris</div>
     </div>
-    <div style="margin-left:8px;background:#eaf3fb;border:1px solid #c0d8ee;color:#2e6ea6;font-size:9px;padding:2px 8px;border-radius:2px;font-weight:500;letter-spacing:1px;font-family:var(--fm)">LME OFFICIAL</div>
+    <div style="background:#eaf3fb;border:1px solid #c0d8ee;color:#2e6ea6;font-size:9px;padding:2px 8px;border-radius:2px;font-weight:500;letter-spacing:1px;font-family:var(--fm)">LME OFFICIAL</div>
   </div>
   <div class="tr">
     <span class="tb"><span class="ld w" id="ldot"></span><span id="llab" style="font-size:10px;font-weight:500">LOADING</span></span>
@@ -233,7 +138,7 @@ canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
         <div class="pn">
           <div class="ph"><span class="pt">Metals Snapshot</span><span class="pk" id="ov-stamp">—</span></div>
           <div class="pb tw"><table><thead><tr><th>METAL</th><th>PRICE (USD/t)</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th><th>52W H</th><th>52W L</th></tr></thead>
-          <tbody id="ov-tbl"><tr><td colspan="8" style="color:#8a9ab0"><span class="sp2"></span>Fetching Yahoo Finance…</td></tr></tbody></table></div>
+          <tbody id="ov-tbl"><tr><td colspan="8" style="color:var(--text3)"><span class="sp2"></span>Fetching Yahoo Finance…</td></tr></tbody></table></div>
         </div>
         <div class="pn"><div class="ph"><span class="pt">Performance (vs prev close)</span></div><div class="pb"><canvas id="ov-cv" height="180"></canvas></div></div>
       </div>
@@ -256,12 +161,12 @@ canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
       <div class="pn" style="margin-bottom:12px">
         <div class="ph"><span class="pt">All Metals — Live Quotes</span><span class="pk" id="sp-stamp">—</span></div>
         <div class="pb tw"><table><thead><tr><th>METAL</th><th>TICKER</th><th>PRICE (USD/t)</th><th>CHG</th><th>CHG%</th><th>OPEN</th><th>HIGH</th><th>LOW</th><th>52W HIGH</th><th>52W LOW</th><th>STATE</th></tr></thead>
-        <tbody id="sp-tbl"><tr><td colspan="11" style="color:#8a9ab0"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+        <tbody id="sp-tbl"><tr><td colspan="11" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
       </div>
       <div class="g2">
         <div class="pn"><div class="ph"><span class="pt">FX Pairs — Live</span></div>
           <div class="pb tw"><table><thead><tr><th>PAIR</th><th>RATE</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th></tr></thead>
-          <tbody id="sp-fx"><tr><td colspan="6" style="color:#8a9ab0"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+          <tbody id="sp-fx"><tr><td colspan="6" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
         </div>
         <div class="pn"><div class="ph"><span class="pt">Relative Performance</span></div><div class="pb"><canvas id="rel-cv" height="200"></canvas></div></div>
       </div>
@@ -309,7 +214,7 @@ canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
                 <div><div class="fl">Implied Vol σ (%)</div><input type="number" id="p-sig" step="0.5" oninput="calcOpt()"></div>
                 <div><div class="fl">Conv. Yield q (%)</div><input type="number" id="p-q" value="1.5" step="0.1" oninput="calcOpt()"></div>
               </div>
-              <div class="rb" id="p-res"><span style="color:#8a9ab0">Waiting for live data…</span></div>
+              <div class="rb" id="p-res"><span style="color:var(--text3)">Waiting for live data…</span></div>
               <div class="gg" id="p-greeks"></div>
             </div>
           </div>
@@ -347,7 +252,7 @@ canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
       <div class="g2">
         <div class="pn"><div class="ph"><span class="pt">FX Pairs</span><span class="pk" id="fx-stamp">—</span></div>
           <div class="pb tw"><table><thead><tr><th>PAIR</th><th>RATE</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th><th>3M FWD (est.)</th><th>SWAP COST %PA</th><th>NOTE</th></tr></thead>
-          <tbody id="fx-tbl"><tr><td colspan="9" style="color:#8a9ab0"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+          <tbody id="fx-tbl"><tr><td colspan="9" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
         </div>
         <div class="pn"><div class="ph"><span class="pt">Cross-Rate Matrix</span></div><div class="pb"><div id="fx-cross"><span class="sp2"></span>Loading…</div></div></div>
       </div>
@@ -366,7 +271,7 @@ canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
               <div><div class="fl">Tenor (months)</div><input type="number" id="h-ten" value="3" min="1" max="24" oninput="calcH()"></div>
               <div><div class="fl">Hedge Ratio (%)</div><input type="number" id="h-rat" value="80" oninput="calcH()"></div>
             </div>
-            <div class="rb" id="h-res"><span style="color:#8a9ab0">Waiting for live FX data…</span></div>
+            <div class="rb" id="h-res"><span style="color:var(--text3)">Waiting for live FX data…</span></div>
           </div>
         </div>
         <div class="pn"><div class="ph"><span class="pt">P&L Scenarios</span></div>
@@ -377,8 +282,41 @@ canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
       </div>
     </div>
 
+    <div class="pg" id="page-termstruct">
+      <div class="sh"><div class="st">Term Structure</div><div class="ss">CONTANGO / BACKWARDATION — LIVE SPOT + MODELED SPREADS</div></div>
+      <div class="wb">⚠ Spot prices live from westmetall.com (LME official). Forward spreads modeled from typical LME structure. Official LME forward data requires paid access.</div>
+      <div class="pn" style="margin-bottom:12px">
+        <div class="ph"><span class="pt">All Metals — Curve Structure</span><span class="pk" id="ts-stamp">—</span></div>
+        <div class="pb tw"><table><thead><tr><th>METAL</th><th>SPOT</th><th>1M</th><th>3M</th><th>6M</th><th>12M</th><th>24M</th><th>STRUCTURE</th><th>SPREAD 3M ($/t)</th><th>ANN. %</th></tr></thead>
+        <tbody id="ts-tbl"><tr><td colspan="10" style="color:#8a9ab0"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+      </div>
+      <div class="g2">
+        <div class="pn">
+          <div class="ph"><span class="pt">Term Structure Chart</span>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+              <button class="perf-btn act" id="ts-btn-Cu" onclick="toggleTs('Cu',this)">Cu</button>
+              <button class="perf-btn act" id="ts-btn-Al" onclick="toggleTs('Al',this)">Al</button>
+              <button class="perf-btn act" id="ts-btn-Ni" onclick="toggleTs('Ni',this)">Ni</button>
+              <button class="perf-btn" id="ts-btn-Zn" onclick="toggleTs('Zn',this)">Zn</button>
+              <button class="perf-btn" id="ts-btn-Pb" onclick="toggleTs('Pb',this)">Pb</button>
+              <button class="perf-btn" id="ts-btn-Sn" onclick="toggleTs('Sn',this)">Sn</button>
+              <select id="ts-mode" style="width:110px;margin-left:8px" onchange="drawTS()">
+                <option value="price">Price USD/t</option>
+                <option value="basis">Spread vs spot</option>
+                <option value="ann">Annualized %</option>
+              </select>
+            </div>
+          </div>
+          <div class="pb">
+            <canvas id="ts-cv" height="240"></canvas>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:#8a9ab0"><span>SPOT</span><span>1W</span><span>1M</span><span>2M</span><span>3M</span><span>6M</span><span>9M</span><span>12M</span><span>18M</span><span>24M</span><span>36M</span></div>
+          </div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Contango / Backwardation Signals</span></div><div class="pb"><div id="ts-signals"></div></div></div>
+      </div>
+    </div>
     <div class="pg" id="page-macro">
-      <div class="sh"><div class="st">Macro Dashboard</div><div class="ss">INDICATORS // CENTRAL BANKS // CALENDAR</div></div>
+      <div class="sh"><div class="st">Macro Dashboard</div><div class="ss">FRED API · CFTC · LIVE DATA</div></div>
       <div class="g2" style="margin-bottom:12px">
         <div class="pn"><div class="ph"><span class="pt">Global Indicators</span></div>
           <div class="pb tw"><table><thead><tr><th>INDICATOR</th><th>VALUE</th><th>PREV</th><th>IMPACT</th></tr></thead><tbody id="mac-tbl"></tbody></table></div>
@@ -390,13 +328,18 @@ canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
       <div class="pn"><div class="ph"><span class="pt">Event Calendar</span></div>
         <div class="pb tw"><table><thead><tr><th>DATE</th><th>EVENT</th><th>IMPACT</th><th>METAL</th><th>CONSENSUS</th><th>PREV</th></tr></thead><tbody id="ev-tbl"></tbody></table></div>
       </div>
+      <div class="pn" style="margin-top:12px">
+        <div class="ph"><span class="pt">COT CFTC — Speculative Positioning</span><span class="pk" id="cot-stamp">loading…</span></div>
+        <div class="pb tw"><table><thead><tr><th>MARKET</th><th>LONG (k)</th><th>SHORT (k)</th><th>NET</th><th>CHG vs PREV</th><th>SIGNAL</th></tr></thead>
+        <tbody id="cot-tbl"><tr><td colspan="6" style="color:#8a9ab0"><span class="sp2"></span>Fetching CFTC data…</td></tr></tbody></table></div>
+      </div>
     </div>
 
     <div class="pg" id="page-news">
       <div class="sh"><div class="st">News Feed</div><div class="ss">BASE METALS • FX • MACRO</div></div>
       <div class="g2">
         <div class="pn"><div class="ph"><span class="pt">Latest Headlines</span></div><div class="pb"><div id="nf"></div></div></div>
-        <div class="pn"><div class="ph"><span class="pt">Supply Disruptions</span></div><div class="pb"><div id="df"></div></div></div>
+        <div class="pn"><div class="ph"><span class="pt">Polymarket — Macro Predictions</span><span class="pk">gamma-api.polymarket.com</span></div><div class="pb"><div id="poly-feed"><span class="sp2"></span>Loading…</div></div></div>
       </div>
     </div>
 
@@ -408,20 +351,25 @@ canvas{display:block;width:100%;background:var(--bg);border-radius:2px}
 // YAHOO FINANCE CONFIG — tickers only, no hardcoded prices
 // ═══════════════════════════════════════════════
 const METALS = {
-  Cu: { ticker:'HG=F',   name:'Copper',    mult:1, col:'#f0a020', volBase:22 },
-  Al: { ticker:'ALI=F',  name:'Aluminium', mult:1, col:'#60b0f0', volBase:18 },
-  Ni: { ticker:'LNIX.L',  name:'Nickel',    mult:1,       col:'#b080f0', volBase:28 },
-  Zn: { ticker:'ZNC=F',  name:'Zinc',      mult:1, col:'#40d090', volBase:20 },
-  Pb: { ticker:'LPBX.L',  name:'Lead',      mult:1, col:'#f07080', volBase:16 },
-  Sn: { ticker:'LSNX.L',  name:'Tin',       mult:1,       col:'#a0b8c8', volBase:24 },
+  Cu: { ticker:'HG=F',   name:'Copper',    mult:1, col:'#1a3a5c', volBase:22 },
+  Al: { ticker:'ALI=F',  name:'Aluminium', mult:1, col:'#2e6ea6', volBase:18 },
+  Ni: { ticker:'NI=F',   name:'Nickel',    mult:1, col:'#4a8fc0', volBase:28 },
+  Zn: { ticker:'ZNC=F',  name:'Zinc',      mult:1, col:'#6aaed4', volBase:20 },
+  Pb: { ticker:'PB=F',   name:'Lead',      mult:1, col:'#5a9abf', volBase:16 },
+  Sn: { ticker:'SN=F',   name:'Tin',       mult:1, col:'#7ab0cf', volBase:24 },
 };
 
 const FX_PAIRS = [
-  { ticker:'EURUSD=X', pair:'EUR/USD', note:'Producer ccy hedge' },
-  { ticker:'CNY=X',    pair:'USD/CNY', note:'China demand proxy' },
-  { ticker:'AUDUSD=X', pair:'AUD/USD', note:'Australian metals' },
-  { ticker:'CLPUSD=X', pair:'USD/CLP', note:'Chile copper', inv:true },
-  { ticker:'GBPUSD=X', pair:'GBP/USD', note:'London metals market' },
+  { ticker:'EURUSD=X', pair:'EUR/USD', note:'Producer ccy hedge',    grp:'Majors' },
+  { ticker:'CNY=X',    pair:'USD/CNY', note:'China demand proxy',     grp:'Majors' },
+  { ticker:'AUDUSD=X', pair:'AUD/USD', note:'Australian base metals', grp:'Majors' },
+  { ticker:'CLPUSD=X', pair:'USD/CLP', note:'Chile copper (CODELCO)', grp:'Majors', inv:true },
+  { ticker:'GBPUSD=X', pair:'GBP/USD', note:'London metals market',   grp:'Majors' },
+  { ticker:'JPY=X',    pair:'USD/JPY', note:'Japan industrial demand', grp:'Asia' },
+  { ticker:'KRW=X',    pair:'USD/KRW', note:'Korea — steel/Al demand',grp:'Asia' },
+  { ticker:'INR=X',    pair:'USD/INR', note:'India — Cu wire/Al',     grp:'Asia' },
+  { ticker:'IDR=X',    pair:'USD/IDR', note:'Indonesia — nickel',     grp:'Asia' },
+  { ticker:'MYR=X',    pair:'USD/MYR', note:'Malaysia — tin/Al',      grp:'Asia' },
 ];
 
 // Term structure multipliers (modeled, relative to spot)
@@ -564,15 +512,16 @@ function updateAll() {
 }
 
 function refPage(id) {
-  if (id === 'ov')     { updOvKpis(); updOvTable(); updOvFX(); updOvSig(); drawOvBars(); }
-  if (id === 'spot')   buildSpot();
-  if (id === 'fwd')    drawFwd();
-  if (id === 'pricer') syncSpot();
-  if (id === 'vol')    buildVol();
-  if (id === 'fx')     buildFX();
-  if (id === 'hedge')  calcH();
-  if (id === 'macro')  buildMacro();
-  if (id === 'news')   buildNews();
+  if (id === 'ov')         { updOvKpis(); updOvTable(); updOvFX(); updOvSig(); drawOvBars(); }
+  if (id === 'spot')       buildSpot();
+  if (id === 'fwd')        drawFwd();
+  if (id === 'termstruct') buildTS();
+  if (id === 'pricer')     syncSpot();
+  if (id === 'vol')        buildVol();
+  if (id === 'fx')         buildFX();
+  if (id === 'hedge')      calcH();
+  if (id === 'macro')      buildMacro();
+  if (id === 'news')       buildNews();
 }
 
 // ═══════════════════════════════════════════════
@@ -587,7 +536,12 @@ function updTopbar() {
   if (eu) { document.getElementById('tb-fx').textContent = f4(eu.price); document.getElementById('tb-fx').className = 'tbv ' + fc(eu.change); }
 }
 
-function updSidebar() { /* no sidebar in MTS theme */ }
+function updSidebar() {
+  document.getElementById('sb-metals').innerHTML = Object.entries(METALS).map(([k,m]) => {
+    const p = metalPrice(k); const d = metalData(k);
+    return `<div><span class="md" style="background:${m.col}"></span>${k} – <span class="${p ? fc(d?.change) : 'neu'}">${p ? '$' + f0(p) : '—'}</span></div>`;
+  }).join('');
+}
 
 // ═══════════════════════════════════════════════
 // OVERVIEW
@@ -809,7 +763,7 @@ function calcOpt() {
   const F=+document.getElementById('p-F').value||0, K=+document.getElementById('p-K').value||0;
   const T=+document.getElementById('p-T').value||0, r=+document.getElementById('p-r').value/100||0;
   const s=+document.getElementById('p-sig').value/100||0, type=document.getElementById('p-typ').value;
-  if(!F||!K||!T||!s){document.getElementById('p-res').innerHTML='<span style="color:#8a9ab0">Fill in all parameters</span>';return;}
+  if(!F||!K||!T||!s){document.getElementById('p-res').innerHTML='<span style="color:var(--text3)">Fill in all parameters</span>';return;}
   const price=b76(F,K,T,r,s,type), g=gr(F,K,T,r,s,type);
   const intr=type==='call'?Math.max(0,F-K):Math.max(0,K-F);
   const money=type==='call'?(F>K?'ITM':F<K?'OTM':'ATM'):(F<K?'ITM':F>K?'OTM':'ATM');
@@ -922,7 +876,7 @@ function calcH() {
   const ratio = +document.getElementById('h-rat').value / 100 || .8;
   const d = fxData(pair);
   const sp = d?.price;
-  if (!sp) { document.getElementById('h-res').innerHTML = '<span style="color:#8a9ab0">Waiting for live FX data…</span>'; return; }
+  if (!sp) { document.getElementById('h-res').innerHTML = '<span style="color:var(--text3)">Waiting for live FX data…</span>'; return; }
   const fwd = sp * (1 + 0.005 * tenor/12);
   const sc = ((fwd/sp-1)*100).toFixed(3);
   const hedged = exp * ratio;
@@ -1038,10 +992,152 @@ window.addEventListener('resize', () => {
   const id = document.querySelector('.pg.act')?.id.replace('page-', '');
   if (id) refPage(id);
 });
+
+// ═══ TERM STRUCTURE ═══
+const TY=[0,1/52,1/12,2/12,3/12,6/12,9/12,1,1.5,2,3];
+let tsVis={Cu:true,Al:true,Ni:true,Zn:false,Pb:false,Sn:false};
+function toggleTs(k,btn){tsVis[k]=!tsVis[k];btn.classList.toggle('act',tsVis[k]);drawTS();}
+
+function buildTS(){
+  document.getElementById('ts-stamp').textContent=lastFetch?lastFetch.toUTCString().split(' ')[4]+' UTC':'—';
+  let html='';
+  Object.entries(METALS).forEach(([k,m])=>{
+    const sp=metalPrice(k); if(!sp){html+=`<tr><td style="color:${m.col}">● ${k}</td><td colspan="9" class="neu">—</td></tr>`;return;}
+    const t=TERM[k];
+    const ct=(t[4]-1)*100, struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
+    const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
+    html+=`<tr><td><span style="color:${m.col}">●</span> ${k} – ${m.name}</td>
+      <td class="hl">$${f0(sp)}</td><td>$${f0(sp*t[2])}</td><td>$${f0(sp*t[4])}</td>
+      <td>$${f0(sp*t[5])}</td><td>$${f0(sp*t[7])}</td><td>$${f0(sp*t[9])}</td>
+      <td><span class="sg ${sc}">${struct}</span></td>
+      <td class="${ct>0?'up':'dn'}">${ct>0?'+':''}$${f0(sp*(t[4]-1))}</td>
+      <td class="${ct>0?'up':'dn'}">${ct>0?'+':''}${(ct*4).toFixed(2)}%</td></tr>`;
+  });
+  document.getElementById('ts-tbl').innerHTML=html;
+  let sigs='';
+  Object.entries(METALS).forEach(([k,m])=>{
+    const t=TERM[k],ct=(t[4]-1)*100;
+    const struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
+    const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
+    sigs+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="color:${m.col};font-weight:600">${k}</span>
+      <span class="sg ${sc}">${struct}</span>
+      <div style="text-align:right;font-size:10px;color:var(--text2)">3M: ${ct>0?'+':''}${ct.toFixed(3)}%<br>
+      <span style="font-size:9px;color:#8a9ab0">${ct>0?'Storage cost > conv. yield':'Shortage / high spot demand'}</span></div>
+    </div>`;
+  });
+  document.getElementById('ts-signals').innerHTML=sigs;
+  drawTS();
+}
+
+function drawTS(){
+  const mode=document.getElementById('ts-mode')?.value||'price';
+  const cv=document.getElementById('ts-cv'); if(!cv) return;
+  const W=cv.offsetWidth||600,H=240; cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,W,H);
+  const lines=[];const allVals=[];
+  Object.entries(METALS).forEach(([k,m])=>{
+    if(!tsVis[k]) return;
+    const sp=metalPrice(k); if(!sp) return;
+    const prices=TERM[k].map(t=>sp*t);
+    let vals=prices;
+    if(mode==='basis') vals=prices.map(p=>p-prices[0]);
+    if(mode==='ann') vals=prices.map((p,i)=>i===0?0:((p/prices[0])**(1/Math.max(TY[i],.001))-1)*100);
+    allVals.push(...vals); lines.push({k,col:m.col,name:m.name,vals});
+  });
+  if(!lines.length) return;
+  const mn=Math.min(...allVals),mx=Math.max(...allVals);
+  const pad={t:20,b:12,l:56,r:20};
+  const W2=W-pad.l-pad.r,H2=H-pad.t-pad.b;
+  const toX=i=>pad.l+i*W2/(TY.length-1), toY=v=>pad.t+H2-(v-mn)/(mx-mn+.001)*H2;
+  ctx.strokeStyle='rgba(180,200,220,.4)';ctx.lineWidth=.5;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const v=mn+(1-t)*(mx-mn),y=toY(v);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='#8a9ab0';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';
+    ctx.fillText(mode==='price'?'$'+(v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0)):v.toFixed(2)+(mode==='ann'?'%':''),pad.l-3,y+3);
+  });
+  if(mode!=='price'){ctx.strokeStyle='rgba(100,128,144,.4)';ctx.lineWidth=.8;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pad.l,toY(0));ctx.lineTo(W-pad.r,toY(0));ctx.stroke();ctx.setLineDash([]);}
+  lines.forEach(line=>{
+    ctx.beginPath();line.vals.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+    ctx.strokeStyle=line.col;ctx.lineWidth=2;ctx.stroke();
+    line.vals.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),3,0,Math.PI*2);ctx.fillStyle=line.col;ctx.fill();});
+    ctx.fillStyle=line.col;ctx.font='10px IBM Plex Mono';ctx.textAlign='left';
+    ctx.fillText(line.k,toX(TY.length-1)+4,toY(line.vals[TY.length-1])+3);
+  });
+}
+
+// ═══ COT CFTC ═══
+async function buildCOT(){
+  try{
+    const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?cot=true',{signal:AbortSignal.timeout(12000)});
+    const d=await r.json(); const rows=d.cot||[];
+    if(!rows.length) throw new Error('No data');
+    document.getElementById('cot-stamp').textContent='CFTC — '+(rows[0]?.date||'—');
+    document.getElementById('cot-tbl').innerHTML=rows.map(r2=>`<tr>
+      <td><span style="color:${r2.col}">●</span> ${r2.name}</td>
+      <td class="up">${(r2.longL/1000).toFixed(1)}k</td>
+      <td class="dn">${(r2.shortL/1000).toFixed(1)}k</td>
+      <td class="${r2.net>0?'up':'dn'}">${r2.net>0?'+':''}${(r2.net/1000).toFixed(1)}k</td>
+      <td class="${r2.chg>0?'up':'dn'}">${r2.chg>0?'+':''}${(r2.chg/1000).toFixed(1)}k</td>
+      <td><span class="sg ${r2.net>0?'slo':'ssh'}">${r2.net>0?'NET LONG':'NET SHORT'}</span></td>
+    </tr>`).join('');
+  }catch(e){document.getElementById('cot-tbl').innerHTML=`<tr><td colspan="6" class="neu">CFTC unavailable: ${e.message}</td></tr>`;}
+}
+
+// ═══ NEWS via Vercel proxy ═══
+async function buildNewsLive(){
+  try{
+    const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?news=true',{signal:AbortSignal.timeout(12000)});
+    const d=await r.json(); const items=d.news||[];
+    if(items.length>0){
+      document.getElementById('nf').innerHTML=items.map(n=>{
+        const date=n.date?new Date(n.date):new Date();
+        const age=Math.round((Date.now()-date)/60000);
+        const ageStr=age<60?age+'m ago':Math.round(age/60)+'h ago';
+        return`<div class="nit"><div style="display:flex;justify-content:space-between"><span class="nt2">${ageStr} · ${n.src}</span>${age<180?'<span class="bg bga">NEW</span>':''}</div>
+          <div class="nh"><a href="${n.link}" target="_blank" style="color:var(--text);text-decoration:none">${n.title}</a></div></div>`;
+      }).join('');
+    }
+  }catch(e){/* keep editorial fallback */}
+}
+
+// ═══ POLYMARKET ═══
+async function buildPolymarket(){
+  try{
+    const r=await fetch('https://gamma-api.polymarket.com/markets?active=true&limit=20&order=volume24hr&ascending=false',{signal:AbortSignal.timeout(8000)});
+    const markets=await r.json(); if(!markets?.length) throw new Error('No markets');
+    const kw=['fed','rate','china','copper','metal','commodit','inflation','recession','tariff','trade','dollar','gold','gdp'];
+    const rel=markets.filter(m=>kw.some(k=>(m.question||'').toLowerCase().includes(k))).slice(0,8);
+    const display=rel.length>0?rel:markets.slice(0,8);
+    document.getElementById('poly-feed').innerHTML=display.map(m=>{
+      const prob=m.outcomePrices?JSON.parse(m.outcomePrices)[0]:null;
+      const pct=prob?Math.round(parseFloat(prob)*100):null;
+      const vol=m.volume24hr?'$'+(parseFloat(m.volume24hr)/1000).toFixed(0)+'k vol':'';
+      const cls=pct>60?'up':pct<40?'dn':'am';
+      return`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          ${pct!==null?`<span class="${cls}" style="font-size:14px;font-weight:600">${pct}%</span>`:'<span class="neu">—</span>'}
+          <span style="font-size:9px;color:#8a9ab0">${vol}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text);line-height:1.3">${m.question}</div>
+      </div>`;
+    }).join('');
+  }catch(e){document.getElementById('poly-feed').innerHTML=`<div style="color:#8a9ab0;font-size:11px">Polymarket unavailable</div>`;}
+}
+
+// ═══ WRAP buildMacro to also call COT ═══
+const _buildMacroOrig = buildMacro;
+buildMacro = function(){ _buildMacroOrig(); buildCOT(); };
+
+// ═══ WRAP buildNews to also try live + polymarket ═══
+const _buildNewsOrig = buildNews;
+buildNews = async function(){ _buildNewsOrig(); await buildNewsLive(); buildPolymarket(); };
+
 </script>
-  <div id="mts-footer" style="background:#fff;border-top:1px solid #dde8f2;padding:6px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px;position:sticky;bottom:0;z-index:90">
+  <div style="background:#fff;border-top:1px solid #dde8f2;padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
     <div style="display:flex;align-items:center;gap:8px">
-      <img src="logo.jpeg" height="18" style="object-fit:contain;opacity:.6">
+      <img src="logo.jpeg" height="16" style="object-fit:contain;opacity:.5">
       <span style="color:#8a9ab0">Metal Trading SAS · Base Metals & FX Terminal · Paris</span>
     </div>
     <span style="color:#b8cfe6;font-family:var(--fm)">westmetall.com · Yahoo Finance · FRED · CFTC · Polymarket</span>
