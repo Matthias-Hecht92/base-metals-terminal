@@ -403,7 +403,7 @@ async function fetchYahoo(tickers) {
     headers: {
       'Accept': 'application/json',
     },
-    signal: AbortSignal.timeout(8000)
+    signal: AbortSignal.timeout(15000)
   });
 
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -536,12 +536,7 @@ function updTopbar() {
   if (eu) { document.getElementById('tb-fx').textContent = f4(eu.price); document.getElementById('tb-fx').className = 'tbv ' + fc(eu.change); }
 }
 
-function updSidebar() {
-  document.getElementById('sb-metals').innerHTML = Object.entries(METALS).map(([k,m]) => {
-    const p = metalPrice(k); const d = metalData(k);
-    return `<div><span class="md" style="background:${m.col}"></span>${k} – <span class="${p ? fc(d?.change) : 'neu'}">${p ? '$' + f0(p) : '—'}</span></div>`;
-  }).join('');
-}
+function updSidebar() { /* no sidebar in this layout */ }
 
 // ═══════════════════════════════════════════════
 // OVERVIEW
@@ -964,7 +959,7 @@ function buildNews() {
     {m:'Ni',col:'var(--ni)',h:'Indonesia: HPAL project delays at PT Merdeka Copper Gold',s:'LOW'},
     {m:'Zn',col:'var(--zn)',h:'Peru: Antamina labor negotiations ongoing, no output impact yet',s:'MEDIUM'},
   ];
-  document.getElementById('df').innerHTML = dis.map(d =>
+  const dfEl = document.getElementById('df'); if(dfEl) dfEl.innerHTML = dis.map(d =>
     `<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:${d.col};font-size:10px">${d.m}</span><span class="bg ${d.s==='HIGH'?'bgd':d.s==='MEDIUM'?'bga':'bgn'}">${d.s}</span></div><div style="font-size:11px">${d.h}</div></div>`
   ).join('');
 }
@@ -995,7 +990,7 @@ window.addEventListener('resize', () => {
 
 // ═══ TERM STRUCTURE ═══
 const TY=[0,1/52,1/12,2/12,3/12,6/12,9/12,1,1.5,2,3];
-let tsVis={Cu:true,Al:true,Ni:true,Zn:false,Pb:false,Sn:false};
+var tsVis={Cu:true,Al:true,Ni:true,Zn:false,Pb:false,Sn:false};
 function toggleTs(k,btn){tsVis[k]=!tsVis[k];btn.classList.toggle('act',tsVis[k]);drawTS();}
 
 function buildTS(){
