@@ -421,6 +421,16 @@ function updateAll() {
   if (id !== 'ov') updOvKpis();
 }
 
+function showPage(id) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('act'));
+  document.querySelectorAll('.nv').forEach(n => n.classList.remove('act'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('act');
+  const nv = document.getElementById('nv-' + id);
+  if (nv) nv.classList.add('act');
+  refPage(id);
+}
+
 function refPage(id) {
   if (id === 'ov')         { updOvKpis(); updOvTable(); updOvFX(); updOvSig(); loadHist(); }
   if (id === 'spot')       buildSpot();
