@@ -316,39 +316,30 @@ let countdown = 60;
 // YAHOO FINANCE FETCH
 // Uses query2 which has slightly more permissive CORS than query1
 // ═══════════════════════════════════════════════
-async function fetchYahoo(tickers) {
-  const fields = 'regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketOpen,regularMarketDayHigh,regularMarketDayLow,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketState,shortName';
-  const url = `https://base-metals-terminal.vercel.app/api/quote?symbols=${tickers.join(',')}`;
-
-  const resp = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-    },
-    signal: AbortSignal.timeout(8000)
-  });
-
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const json = await resp.json();
-  const quotes = json?.quoteResponse?.result || [];
-  if (!quotes.length) throw new Error('Empty response');
-
-  quotes.forEach(q => {
-    D[q.symbol] = {
-      price:  q.regularMarketPrice,
-      change: q.regularMarketChange,
-      pct:    q.regularMarketChangePercent,
-      open:   q.regularMarketOpen,
-      high:   q.regularMarketDayHigh,
-      low:    q.regularMarketDayLow,
-      prev:   q.regularMarketPreviousClose,
-      w52h:   q.fiftyTwoWeekHigh,
-      w52l:   q.fiftyTwoWeekLow,
-      state:  q.marketState,
-      name:   q.shortName,
-    };
-  });
-  return quotes.length;
+async function fetchOneTicker(sym) {
+  const url = `https://base-metals-terminal.vercel.app/api/quote?symbols=${encodeURIComponent(sym)}`;
+  try {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!resp.ok) return 0;
+    const json = await resp.json();
+    const quotes = json?.quoteResponse?.result || [];
+    quotes.forEach(q => {
+      D[q.symbol] = {
+        price:  q.regularMarketPrice,
+        change: q.regularMarketChange,
+        pct:    q.regularMarketChangePercent,
+        open:   q.regularMarketOpen,
+        high:   q.regularMarketDayHigh,
+        low:    q.regularMarketDayLow,
+        prev:   q.regularMarketPreviousClose,
+        w52h:   q.fiftyTwoWeekHigh,
+        w52l:   q.fiftyTwoWeekLow,
+        state:  q.marketState,
+        name:   q.shortName,
+      };
+    });
+    return quotes.length;
+  } catch(e) { return 0; }
 }
 
 async function fetchAll() {
@@ -361,14 +352,11 @@ async function fetchAll() {
   ];
 
   try {
-    // Split into batches of 8 to avoid URL length issues
+    // Fetch metals first (westmetall — slower), then FX (Yahoo — faster)
+    // Run all in parallel — each request is independent
     let total = 0;
-    for (let i = 0; i < allTickers.length; i += 8) {
-      const batch = allTickers.slice(i, i + 8);
-      const n = await fetchYahoo(batch);
-      total += n;
-      if (i + 8 < allTickers.length) await sleep(200);
-    }
+    const results = await Promise.allSettled(allTickers.map(t => fetchOneTicker(t)));
+    results.forEach(r => { if(r.status === 'fulfilled') total += r.value; });
 
     if (total > 0) {
       fetchOk = true;
