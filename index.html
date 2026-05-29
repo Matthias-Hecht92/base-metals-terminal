@@ -877,14 +877,6 @@ function buildMacro() {
 // ═══════════════════════════════════════════════
 // NAV
 // ═══════════════════════════════════════════════
-// (duplicate removed)('.pg').forEach(p => p.classList.remove('act'));
-  document.querySelectorAll('.nv').forEach(n => n.classList.remove('act'));
-  const pg = document.getElementById('page-' + id);
-  if (pg) pg.classList.add('act');
-  const nv = document.getElementById('nv-' + id);
-  if (nv) nv.classList.add('act');
-  refPage(id);
-}
 if(typeof _spQ!=='undefined'&&_spQ.length){const _last=_spQ[_spQ.length-1];_spQ=[];showPage(_last);}
 
 // ═══════════════════════════════════════════════
