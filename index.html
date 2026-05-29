@@ -251,6 +251,102 @@ function showPage(id) {
         <div class="pn"><div class="ph"><span class="pt">Contango / Backwardation Signals</span></div><div class="pb"><div id="ts-signals"></div></div></div>
       </div>
     </div>
+    <div class="pg" id="page-pricer">
+      <div class="sh"><div class="st">Options Pricer</div><div class="ss">BLACK-76 // SPOT LIVE LME</div></div>
+      <div class="g2">
+        <div>
+          <div class="pn" style="margin-bottom:12px">
+            <div class="ph"><span class="pt">Black-76 Parameters</span><span class="pk" id="p-src">—</span></div>
+            <div class="pb">
+              <div class="fr">
+                <div><div class="fl">Metal</div><select id="p-met" onchange="syncSpot()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select></div>
+                <div><div class="fl">Type</div><select id="p-typ" onchange="calcOpt()"><option value="call">CALL</option><option value="put">PUT</option></select></div>
+              </div>
+              <div class="fr">
+                <div><div class="fl">Futures F (USD/t)</div><input type="number" id="p-F" oninput="calcOpt()"></div>
+                <div><div class="fl">Strike K (USD/t)</div><input type="number" id="p-K" oninput="calcOpt()"></div>
+              </div>
+              <div class="fr">
+                <div><div class="fl">Tenor T (years)</div><input type="number" id="p-T" value="0.5" step="0.05" oninput="calcOpt()"></div>
+                <div><div class="fl">Rate r (%)</div><input type="number" id="p-r" value="3.75" step="0.1" oninput="calcOpt()"></div>
+              </div>
+              <div class="fr">
+                <div><div class="fl">Implied Vol σ (%)</div><input type="number" id="p-sig" step="0.5" oninput="calcOpt()"></div>
+                <div><div class="fl">Conv. Yield q (%)</div><input type="number" id="p-q" value="1.5" step="0.1" oninput="calcOpt()"></div>
+              </div>
+              <div class="rb" id="p-res"><span style="color:var(--text3)">Waiting for live data…</span></div>
+              <div class="gg" id="p-greeks"></div>
+            </div>
+          </div>
+          <div class="pn"><div class="ph"><span class="pt">Scenario Analysis</span></div>
+            <div class="pb tw"><table><thead><tr><th>MOVE</th><th>SPOT</th><th>OPT P&L</th><th>DELTA HEDGE</th><th>NET</th></tr></thead><tbody id="p-scen"></tbody></table></div>
+          </div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">P&L at Expiry</span></div>
+          <div class="pb"><canvas id="pnl-cv" height="240"></canvas><div class="dl"></div><div style="font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:10px">THETA DECAY</div><canvas id="tht-cv" height="120"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pg" id="page-vol">
+      <div class="sh"><div class="st">Vol Surface</div><div class="ss">IMPLIED VOL — MODELED FROM LIVE SPOT</div></div>
+      <div class="g2" style="margin-bottom:12px">
+        <div class="pn">
+          <div class="ph"><span class="pt">IV Surface — <span id="vt">—</span></span>
+            <select id="v-sel" style="width:140px" onchange="buildVol()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select>
+          </div>
+          <div class="pb"><div id="v-surf"><span class="sp2"></span>Loading…</div></div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Term Structure</span></div>
+          <div class="pb"><canvas id="v-tc" height="180"></canvas><div class="dl"></div>
+            <div style="font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:8px">SKEW & RISK REVERSALS</div>
+            <div class="tw"><table><thead><tr><th>METAL</th><th>ATM 3M</th><th>25Δ RR</th><th>25Δ BF</th><th>SKEW</th></tr></thead><tbody id="sk-tbl"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pg" id="page-fx">
+      <div class="sh"><div class="st">FX Rates</div><div class="ss">YAHOO FINANCE — LIVE // MAJORS + ASIAN CCY</div></div>
+      <div class="g4" style="margin-bottom:14px" id="fx-kpis"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button class="perf-btn act" id="fx-grp-all" onclick="setFxGroup('all',this)">All</button>
+        <button class="perf-btn" id="fx-grp-Majors" onclick="setFxGroup('Majors',this)">Majors</button>
+        <button class="perf-btn" id="fx-grp-Asia" onclick="setFxGroup('Asia',this)">Asian CCY</button>
+      </div>
+      <div class="g2">
+        <div class="pn"><div class="ph"><span class="pt">FX Pairs</span><span class="pk" id="fx-stamp">—</span></div>
+          <div class="pb tw"><table><thead><tr><th>PAIR</th><th>RATE</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th><th>3M FWD (est.)</th><th>SWAP %PA</th><th>NOTE</th></tr></thead>
+          <tbody id="fx-tbl"><tr><td colspan="9" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Cross-Rate Matrix</span></div><div class="pb"><div id="fx-cross"><span class="sp2"></span>Loading…</div></div></div>
+      </div>
+    </div>
+
+    <div class="pg" id="page-hedge">
+      <div class="sh"><div class="st">Hedge Calculator</div><div class="ss">FX FORWARD HEDGE // LIVE RATES</div></div>
+      <div class="g2">
+        <div class="pn"><div class="ph"><span class="pt">Parameters</span></div>
+          <div class="pb">
+            <div class="fr">
+              <div><div class="fl">Exposure (USD)</div><input type="number" id="h-exp" value="5000000" oninput="calcH()"></div>
+              <div><div class="fl">CCY Pair</div><select id="h-pair" onchange="calcH()"></select></div>
+            </div>
+            <div class="fr">
+              <div><div class="fl">Tenor (months)</div><input type="number" id="h-ten" value="3" min="1" max="24" oninput="calcH()"></div>
+              <div><div class="fl">Hedge Ratio (%)</div><input type="number" id="h-rat" value="80" oninput="calcH()"></div>
+            </div>
+            <div class="rb" id="h-res"><span style="color:var(--text3)">Waiting for live FX data…</span></div>
+          </div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">P&L Scenarios</span></div>
+          <div class="pb"><canvas id="h-cv" height="200"></canvas><div class="dl"></div>
+            <div class="tw"><table><thead><tr><th>FX MOVE</th><th>UNHEDGED</th><th>HEDGED</th><th>NET BENEFIT</th></tr></thead><tbody id="h-scen"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="pg" id="page-macro">
       <div class="sh"><div class="st">Macro Dashboard</div><div class="ss">FRED API · CFTC · LIVE DATA</div></div>
       <div class="g2" style="margin-bottom:12px">
@@ -715,14 +811,16 @@ function buildVol() {
 // ═══════════════════════════════════════════════
 function buildFX() {
   document.getElementById('fx-stamp').textContent = lastFetch ? lastFetch.toUTCString().split(' ')[4] + ' UTC' : '—';
+  const filtered = (typeof fxGroup !== 'undefined' && fxGroup !== 'all')
+    ? FX_PAIRS.filter(f => f.grp === fxGroup) : FX_PAIRS;
 
-  document.getElementById('fx-kpis').innerHTML = FX_PAIRS.slice(0,4).map(f => {
+  document.getElementById('fx-kpis').innerHTML = FX_PAIRS.filter(f=>f.grp==='Majors').slice(0,4).map(f => {
     const d = D[f.ticker];
     if (!d) return `<div class="kp"><div class="kl">${f.pair}</div><div class="kv"><span class="sp2"></span></div></div>`;
     return `<div class="kp"><div class="kl">${f.pair}</div><div class="kv ${fc(d.change)}">${f4(d.price)}</div><div class="ks ${fc(d.change)}">${d.change>=0?'▲ +':'▼ '}${Math.abs(d.pct).toFixed(2)}%</div></div>`;
   }).join('');
 
-  document.getElementById('fx-tbl').innerHTML = FX_PAIRS.map(f => {
+  document.getElementById('fx-tbl').innerHTML = filtered.map(f => {
     const d = D[f.ticker];
     if (!d) return `<tr><td class="hl">${f.pair}</td><td colspan="8" class="neu">Loading…</td></tr>`;
     const fwd = d.price * (1 + 0.005 * 0.25);
@@ -813,7 +911,7 @@ function buildMacro() {
     {id:'RBAAOARD', label:'RBA',                sfx:'%', next:'Jul 1 2026',  imp:'↔ AUD stable'},
   ];
   Promise.all(cbSeries.map(s =>
-    fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${s.id}`,{signal:AbortSignal.timeout(10000)})
+    fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${s.id}`,{signal:AbortSignal.timeout(15000)})
       .then(r=>r.text()).then(txt=>{
         const lines=txt.trim().split('\n').filter(l=>!l.startsWith('DATE')&&l.trim());
         const val=parseFloat(lines[lines.length-1]?.split(',')[1]);
@@ -1134,7 +1232,7 @@ async function buildCOT(){
   const cotEl=document.getElementById('cot-tbl');
   const stEl=document.getElementById('cot-stamp');
   try{
-    const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?cot=true',{signal:AbortSignal.timeout(15000)});
+    const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?cot=true',{signal:AbortSignal.timeout(25000)});
     const d=await r.json();const rows=d.cot||[];
     if(!rows.length)throw new Error('No data');
     if(stEl)stEl.textContent='CFTC — '+(rows[0]?.date||'—');
@@ -1189,6 +1287,24 @@ async function buildNews(){
 }
 
 }); // end DOMContentLoaded
+
+// FX group filter
+var fxGroup = 'all';
+function setFxGroup(g, btn) {
+  fxGroup = g;
+  document.querySelectorAll('[id^="fx-grp-"]').forEach(b => b.classList.remove('act'));
+  if(btn) btn.classList.add('act');
+  buildFX();
+}
+
+// Fix period buttons for hp chart (Overview)
+document.querySelectorAll('#page-ov .perf-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#page-ov .perf-btn').forEach(b => b.classList.remove('act'));
+    this.classList.add('act');
+  });
+});
+
 </script>
   <div style="background:#fff;border-top:1px solid #dde8f2;padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
     <div style="display:flex;align-items:center;gap:8px">
