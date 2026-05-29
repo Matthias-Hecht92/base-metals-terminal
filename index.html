@@ -97,7 +97,7 @@ function showPage(id) {
   if (pg) pg.classList.add('act');
   const nv = document.getElementById('nv-' + id);
   if (nv) nv.classList.add('act');
-  if (typeof refPage === 'function') refPage(id);
+  if (typeof window._refPage === 'function') window._refPage(id);
 }
 </script>
 <div id="topbar">
@@ -418,6 +418,7 @@ function updateAll() {
 }
 
 function refPage(id) {
+  window._refPage = refPage; // expose globally
   if (id === 'ov')         { updOvKpis(); updOvTable(); updOvFX(); updOvSig(); loadHist(); loadHist2(); }
   if (id === 'spot')       { buildSpot(); loadHist2(); }
   if (id === 'termstruct') buildTS();
