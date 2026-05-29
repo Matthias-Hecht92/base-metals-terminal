@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script>var _spQ=[];function showPage(id){_spQ.push(id);}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Metal Trading SAS — Base Metals Terminal</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -86,6 +85,21 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
 </style>
 </head>
 <body>
+<script>
+function showPage(id) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { showPage(id); });
+    return;
+  }
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('act'));
+  document.querySelectorAll('.nv').forEach(n => n.classList.remove('act'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('act');
+  const nv = document.getElementById('nv-' + id);
+  if (nv) nv.classList.add('act');
+  if (typeof refPage === 'function') refPage(id);
+}
+</script>
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:12px">
     <img src="logo.jpeg" height="36" style="object-fit:contain;display:block">
@@ -269,6 +283,9 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+
+
 // ═══════════════════════════════════════════════
 // YAHOO FINANCE CONFIG — tickers only, no hardcoded prices
 // ═══════════════════════════════════════════════
@@ -877,7 +894,6 @@ function buildMacro() {
 // ═══════════════════════════════════════════════
 // NAV
 // ═══════════════════════════════════════════════
-if(typeof _spQ!=='undefined'&&_spQ.length){const _last=_spQ[_spQ.length-1];_spQ=[];showPage(_last);}
 
 // ═══════════════════════════════════════════════
 // INIT
@@ -1171,6 +1187,7 @@ async function buildNews(){
   }catch(e){const polyEl=document.getElementById('poly-feed');if(polyEl)polyEl.innerHTML='<div style="color:#8a9ab0">Polymarket unavailable</div>';}
 }
 
+}); // end DOMContentLoaded
 </script>
   <div style="background:#fff;border-top:1px solid #dde8f2;padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
     <div style="display:flex;align-items:center;gap:8px">
