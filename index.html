@@ -2,11 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script>
-// Stub — allows navbar onclick calls before main script loads
-var _spQueue = [];
-function showPage(id) { _spQueue.push(id); }
-</script>
+<script>var _spQ=[];function showPage(id){_spQ.push(id);}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Metal Trading SAS — Base Metals Terminal</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -121,7 +117,6 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
 <nav id="navbar">
   <div class="nv act" id="nv-ov" onclick="showPage('ov')">Overview</div>
   <div class="nv" id="nv-spot" onclick="showPage('spot')">Spot & Futures</div>
-  <div class="nv" id="nv-fwd" onclick="showPage('fwd')">Fwd Curves</div>
   <div class="nv" id="nv-termstruct" onclick="showPage('termstruct')">Term Structure</div>
   <div style="width:1px;background:rgba(255,255,255,.12);margin:8px 4px"></div>
   <div class="nv" id="nv-pricer" onclick="showPage('pricer')">Option Pricer</div>
@@ -145,7 +140,41 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
           <div class="pb tw"><table><thead><tr><th>METAL</th><th>PRICE (USD/t)</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th><th>52W H</th><th>52W L</th></tr></thead>
           <tbody id="ov-tbl"><tr><td colspan="8" style="color:var(--text3)"><span class="sp2"></span>Fetching Yahoo Finance…</td></tr></tbody></table></div>
         </div>
-        <div class="pn"><div class="ph"><span class="pt">Performance (vs prev close)</span></div><div class="pb"><canvas id="ov-cv" height="180"></canvas></div></div>
+        <div class="pn">
+          <div class="ph">
+            <span class="pt">Historical Performance</span>
+            <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+              <select id="hp-sym" style="width:130px;font-size:10px" onchange="loadHist()">
+                <option value="HG=F">Copper</option>
+                <option value="ALI=F">Aluminium</option>
+                <option value="NI=F">Nickel</option>
+                <option value="ZNC=F">Zinc</option>
+                <option value="PB=F">Lead</option>
+                <option value="SN=F">Tin</option>
+                <option value="EURUSD=X">EUR/USD</option>
+                <option value="CNY=X">USD/CNY</option>
+                <option value="AUDUSD=X">AUD/USD</option>
+                <option value="JPY=X">USD/JPY</option>
+                <option value="GBPUSD=X">GBP/USD</option>
+              </select>
+              <div style="display:flex;gap:2px">
+                <button class="perf-btn" onclick="setHP('5d',this)">5D</button>
+                <button class="perf-btn" onclick="setHP('1mo',this)">1M</button>
+                <button class="perf-btn" onclick="setHP('3mo',this)">3M</button>
+                <button class="perf-btn" onclick="setHP('6mo',this)">6M</button>
+                <button class="perf-btn act" onclick="setHP('1y',this)">1Y</button>
+                <button class="perf-btn" onclick="setHP('3y',this)">3Y</button>
+                <button class="perf-btn" onclick="setHP('5y',this)">5Y</button>
+                <button class="perf-btn" onclick="setHP('max',this)">MAX</button>
+              </div>
+              <span id="hp-stat" style="font-size:10px;font-weight:600"></span>
+            </div>
+          </div>
+          <div class="pb" style="padding-bottom:6px">
+            <div id="hp-msg" style="color:#8a9ab0;font-size:11px;padding:8px 0"><span class="sp2"></span>Loading…</div>
+            <canvas id="hp-cv" height="190" style="display:none"></canvas>
+          </div>
+        </div>
       </div>
       <div class="g3">
         <div class="pn"><div class="ph"><span class="pt">FX Snapshot</span></div><div class="pb"><div id="ov-fx"><span class="sp2"></span>Loading…</div></div></div>
@@ -177,119 +206,9 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
       </div>
     </div>
 
-    <div class="pg" id="page-fwd">
-      <div class="sh"><div class="st">Forward Curves</div><div class="ss">LIVE SPOT + MODELED TERM STRUCTURE</div></div>
-      <div class="wb">⚠ Spot prices live from Yahoo Finance. Forwards modeled — LME official forward data requires paid access.</div>
-      <div class="g2" style="margin-bottom:12px">
-        <div class="pn">
-          <div class="ph"><span class="pt">Forward Curve</span>
-            <div style="display:flex;gap:6px">
-              <select id="fw-sel" style="width:130px" onchange="drawFwd()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select>
-              <select id="fw-mode" style="width:110px" onchange="drawFwd()"><option value="price">Price USD/t</option><option value="basis">Basis</option><option value="ann">Ann. %</option></select>
-            </div>
-          </div>
-          <div class="pb"><canvas id="fw-cv" height="200"></canvas>
-            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--text3)"><span>SPOT</span><span>1W</span><span>1M</span><span>2M</span><span>3M</span><span>6M</span><span>9M</span><span>12M</span><span>18M</span><span>24M</span><span>36M</span></div>
-          </div>
-        </div>
-        <div class="pn"><div class="ph"><span class="pt">Curve Stats</span></div><div class="pb"><div id="fw-stats"><span class="sp2"></span>Loading…</div></div></div>
-      </div>
-    </div>
-
-    <div class="pg" id="page-pricer">
-      <div class="sh"><div class="st">Options Pricer</div><div class="ss">BLACK-76 // SPOT SYNCED FROM YAHOO FINANCE</div></div>
-      <div class="g2">
-        <div>
-          <div class="pn" style="margin-bottom:12px">
-            <div class="ph"><span class="pt">Black-76 Parameters</span><span class="pk" id="p-src">—</span></div>
-            <div class="pb">
-              <div class="fr">
-                <div><div class="fl">Metal</div><select id="p-met" onchange="syncSpot()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select></div>
-                <div><div class="fl">Type</div><select id="p-typ" onchange="calcOpt()"><option value="call">CALL</option><option value="put">PUT</option></select></div>
-              </div>
-              <div class="fr">
-                <div><div class="fl">Futures F (USD/t)</div><input type="number" id="p-F" oninput="calcOpt()"></div>
-                <div><div class="fl">Strike K (USD/t)</div><input type="number" id="p-K" oninput="calcOpt()"></div>
-              </div>
-              <div class="fr">
-                <div><div class="fl">Tenor T (years)</div><input type="number" id="p-T" value="0.5" step="0.05" oninput="calcOpt()"></div>
-                <div><div class="fl">Rate r (%)</div><input type="number" id="p-r" value="4.5" step="0.1" oninput="calcOpt()"></div>
-              </div>
-              <div class="fr">
-                <div><div class="fl">Implied Vol σ (%)</div><input type="number" id="p-sig" step="0.5" oninput="calcOpt()"></div>
-                <div><div class="fl">Conv. Yield q (%)</div><input type="number" id="p-q" value="1.5" step="0.1" oninput="calcOpt()"></div>
-              </div>
-              <div class="rb" id="p-res"><span style="color:var(--text3)">Waiting for live data…</span></div>
-              <div class="gg" id="p-greeks"></div>
-            </div>
-          </div>
-          <div class="pn"><div class="ph"><span class="pt">Scenario Analysis</span></div>
-            <div class="pb tw"><table><thead><tr><th>MOVE</th><th>SPOT</th><th>OPT P&L</th><th>DELTA HEDGE</th><th>NET</th></tr></thead><tbody id="p-scen"></tbody></table></div>
-          </div>
-        </div>
-        <div class="pn"><div class="ph"><span class="pt">P&L at Expiry</span></div>
-          <div class="pb"><canvas id="pnl-cv" height="240"></canvas><div class="dl"></div><div style="font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:10px">THETA DECAY</div><canvas id="tht-cv" height="120"></canvas></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="pg" id="page-vol">
-      <div class="sh"><div class="st">Vol Surface</div><div class="ss">IMPLIED VOL — MODELED FROM LIVE SPOT</div></div>
-      <div class="g2" style="margin-bottom:12px">
-        <div class="pn">
-          <div class="ph"><span class="pt">IV Surface — <span id="vt">—</span></span>
-            <select id="v-sel" style="width:140px" onchange="buildVol()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select>
-          </div>
-          <div class="pb"><div id="v-surf"><span class="sp2"></span>Loading…</div></div>
-        </div>
-        <div class="pn"><div class="ph"><span class="pt">Term Structure</span></div>
-          <div class="pb"><canvas id="v-tc" height="180"></canvas><div class="dl"></div>
-            <div style="font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:8px">SKEW & RISK REVERSALS</div>
-            <div class="tw"><table><thead><tr><th>METAL</th><th>ATM 3M</th><th>25Δ RR</th><th>25Δ BF</th><th>SKEW</th></tr></thead><tbody id="sk-tbl"></tbody></table></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="pg" id="page-fx">
-      <div class="sh"><div class="st">FX Rates</div><div class="ss">YAHOO FINANCE — LIVE</div></div>
-      <div class="g4" style="margin-bottom:14px" id="fx-kpis"></div>
-      <div class="g2">
-        <div class="pn"><div class="ph"><span class="pt">FX Pairs</span><span class="pk" id="fx-stamp">—</span></div>
-          <div class="pb tw"><table><thead><tr><th>PAIR</th><th>RATE</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th><th>3M FWD (est.)</th><th>SWAP COST %PA</th><th>NOTE</th></tr></thead>
-          <tbody id="fx-tbl"><tr><td colspan="9" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
-        </div>
-        <div class="pn"><div class="ph"><span class="pt">Cross-Rate Matrix</span></div><div class="pb"><div id="fx-cross"><span class="sp2"></span>Loading…</div></div></div>
-      </div>
-    </div>
-
-    <div class="pg" id="page-hedge">
-      <div class="sh"><div class="st">Hedge Calculator</div><div class="ss">FX FORWARD HEDGE // LIVE RATES</div></div>
-      <div class="g2">
-        <div class="pn"><div class="ph"><span class="pt">Parameters</span></div>
-          <div class="pb">
-            <div class="fr">
-              <div><div class="fl">Exposure (USD)</div><input type="number" id="h-exp" value="5000000" oninput="calcH()"></div>
-              <div><div class="fl">CCY Pair</div><select id="h-pair" onchange="calcH()" id="h-pair"></select></div>
-            </div>
-            <div class="fr">
-              <div><div class="fl">Tenor (months)</div><input type="number" id="h-ten" value="3" min="1" max="24" oninput="calcH()"></div>
-              <div><div class="fl">Hedge Ratio (%)</div><input type="number" id="h-rat" value="80" oninput="calcH()"></div>
-            </div>
-            <div class="rb" id="h-res"><span style="color:var(--text3)">Waiting for live FX data…</span></div>
-          </div>
-        </div>
-        <div class="pn"><div class="ph"><span class="pt">P&L Scenarios</span></div>
-          <div class="pb"><canvas id="h-cv" height="200"></canvas><div class="dl"></div>
-            <div class="tw"><table><thead><tr><th>FX MOVE</th><th>UNHEDGED</th><th>HEDGED</th><th>NET BENEFIT</th></tr></thead><tbody id="h-scen"></tbody></table></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="pg" id="page-termstruct">
-      <div class="sh"><div class="st">Term Structure</div><div class="ss">CONTANGO / BACKWARDATION — LIVE SPOT + MODELED SPREADS</div></div>
-      <div class="wb">⚠ Spot prices live from westmetall.com (LME official). Forward spreads modeled from typical LME structure. Official LME forward data requires paid access.</div>
+      <div class="sh"><div class="st">Term Structure</div><div class="ss">LME OFFICIAL FORWARDS — lme.com (15MIN DELAY) + westmetall.com</div></div>
+      <div class="wb"></div>
       <div class="pn" style="margin-bottom:12px">
         <div class="ph"><span class="pt">All Metals — Curve Structure</span><span class="pk" id="ts-stamp">—</span></div>
         <div class="pb tw"><table><thead><tr><th>METAL</th><th>SPOT</th><th>1M</th><th>3M</th><th>6M</th><th>12M</th><th>24M</th><th>STRUCTURE</th><th>SPREAD 3M ($/t)</th><th>ANN. %</th></tr></thead>
@@ -399,75 +318,43 @@ let countdown = 60;
 // YAHOO FINANCE FETCH
 // Uses query2 which has slightly more permissive CORS than query1
 // ═══════════════════════════════════════════════
-async function fetchYahoo(tickers) {
-  const fields = 'regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketOpen,regularMarketDayHigh,regularMarketDayLow,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketState,shortName';
-  const url = `https://base-metals-terminal.vercel.app/api/quote?symbols=${tickers.join(',')}`;
-
-  const resp = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-    },
-    signal: AbortSignal.timeout(8000)
-  });
-
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const json = await resp.json();
-  const quotes = json?.quoteResponse?.result || [];
-  if (!quotes.length) throw new Error('Empty response');
-
-  quotes.forEach(q => {
-    D[q.symbol] = {
-      price:  q.regularMarketPrice,
-      change: q.regularMarketChange,
-      pct:    q.regularMarketChangePercent,
-      open:   q.regularMarketOpen,
-      high:   q.regularMarketDayHigh,
-      low:    q.regularMarketDayLow,
-      prev:   q.regularMarketPreviousClose,
-      w52h:   q.fiftyTwoWeekHigh,
-      w52l:   q.fiftyTwoWeekLow,
-      state:  q.marketState,
-      name:   q.shortName,
-    };
-  });
-  return quotes.length;
+async function fetchOneTicker(sym) {
+  try {
+    const url = `https://base-metals-terminal.vercel.app/api/quote?symbols=${encodeURIComponent(sym)}`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!r.ok) return 0;
+    const json = await r.json();
+    const quotes = json?.quoteResponse?.result || [];
+    quotes.forEach(q => {
+      D[q.symbol] = {
+        price: q.regularMarketPrice, change: q.regularMarketChange,
+        pct:   q.regularMarketChangePercent, open: q.regularMarketOpen,
+        high:  q.regularMarketDayHigh,  low: q.regularMarketDayLow,
+        prev:  q.regularMarketPreviousClose, w52h: q.fiftyTwoWeekHigh,
+        w52l:  q.fiftyTwoWeekLow, state: q.marketState, name: q.shortName,
+      };
+    });
+    if (quotes.length > 0) updateAll(); // update UI as each ticker arrives
+    return quotes.length;
+  } catch(e) { return 0; }
 }
 
 async function fetchAll() {
   setSt('loading');
   document.getElementById('ds-msg').textContent = '';
-
   const allTickers = [
     ...Object.values(METALS).map(m => m.ticker),
     ...FX_PAIRS.map(f => f.ticker)
   ];
-
-  try {
-    // Split into batches of 8 to avoid URL length issues
-    let total = 0;
-    for (let i = 0; i < allTickers.length; i += 8) {
-      const batch = allTickers.slice(i, i + 8);
-      const n = await fetchYahoo(batch);
-      total += n;
-      if (i + 8 < allTickers.length) await sleep(200);
-    }
-
-    if (total > 0) {
-      fetchOk = true;
-      lastFetch = new Date();
-      setSt('live');
-      document.getElementById('ds-last').textContent = lastFetch.toUTCString().split(' ')[4] + ' UTC';
-    } else {
-      throw new Error('No quotes returned');
-    }
-  } catch(e) {
-    fetchOk = false;
-    setSt('err');
-    document.getElementById('ds-msg').textContent = '⚠ Yahoo Finance unreachable: ' + e.message;
-    console.error('Fetch error:', e);
+  const results = await Promise.allSettled(allTickers.map(t => fetchOneTicker(t)));
+  const total = results.reduce((s,r) => s + (r.status==='fulfilled' ? r.value : 0), 0);
+  if (total > 0) {
+    fetchOk = true; lastFetch = new Date(); setSt('live');
+    document.getElementById('ds-last').textContent = lastFetch.toUTCString().split(' ')[4] + ' UTC';
+  } else {
+    fetchOk = false; setSt('err');
+    document.getElementById('ds-msg').textContent = '⚠ Proxy unreachable — check Vercel';
   }
-
   updateAll();
 }
 
@@ -517,9 +404,8 @@ function updateAll() {
 }
 
 function refPage(id) {
-  if (id === 'ov')         { updOvKpis(); updOvTable(); updOvFX(); updOvSig(); drawOvBars(); }
+  if (id === 'ov')         { updOvKpis(); updOvTable(); updOvFX(); updOvSig(); loadHist(); }
   if (id === 'spot')       buildSpot();
-  if (id === 'fwd')        drawFwd();
   if (id === 'termstruct') buildTS();
   if (id === 'pricer')     syncSpot();
   if (id === 'vol')        buildVol();
@@ -541,13 +427,7 @@ function updTopbar() {
   if (eu) { document.getElementById('tb-fx').textContent = f4(eu.price); document.getElementById('tb-fx').className = 'tbv ' + fc(eu.change); }
 }
 
-function updSidebar() {
-  const _sb=document.getElementById('sb-metals'); if(!_sb) return;
-  _sb.innerHTML = Object.entries(METALS).map(([k,m]) => {
-    const p = metalPrice(k); const d = metalData(k);
-    return `<div><span class="md" style="background:${m.col}"></span>${k} – <span class="${p ? fc(d?.change) : 'neu'}">${p ? '$' + f0(p) : '—'}</span></div>`;
-  }).join('');
-}
+function updSidebar() { const _sb=document.getElementById('sb-metals'); if(!_sb) return; _sb.innerHTML=Object.entries(METALS).map(([k,m])=>{const p=metalPrice(k),d=metalData(k);return`<div><span class="md" style="background:${m.col}"></span>${k} – <span class="${p?fc(d?.change):'neu'}">${p?'$'+f0(p):'—'}</span></div>`;}).join(''); }
 
 // ═══════════════════════════════════════════════
 // OVERVIEW
@@ -616,27 +496,7 @@ function updOvSig() {
   }).join('');
 }
 
-function drawOvBars() {
-  const cv = document.getElementById('ov-cv'); if (!cv) return;
-  const W = cv.offsetWidth || 500, H = 180; cv.width = W; cv.height = H;
-  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
-  const keys = Object.keys(METALS);
-  const chgs = keys.map(k => metalData(k)?.pct || 0);
-  const bW = Math.min(55, (W-40)/keys.length*.65), gap = (W-40-bW*keys.length)/(keys.length+1);
-  const mY = H * .55;
-  ctx.strokeStyle = 'rgba(28,40,48,.8)'; ctx.lineWidth = .5;
-  ctx.beginPath(); ctx.moveTo(20, mY); ctx.lineTo(W-20, mY); ctx.stroke();
-  keys.forEach((k, i) => {
-    const x = 20+gap+i*(bW+gap), c = chgs[i], bH = Math.abs(c)/4*mY*.9, y = c >= 0 ? mY-bH : mY;
-    const col = METALS[k].col;
-    ctx.fillStyle = col + '40'; ctx.fillRect(x, y, bW, bH);
-    ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.strokeRect(x, y, bW, bH);
-    ctx.fillStyle = col; ctx.font = '10px IBM Plex Mono'; ctx.textAlign = 'center';
-    ctx.fillText(k, x+bW/2, H-6);
-    ctx.fillStyle = c >= 0 ? '#30d090' : '#e05060';
-    ctx.fillText((c >= 0 ? '+' : '') + c.toFixed(2) + '%', x+bW/2, c >= 0 ? y-4 : y+bH+12);
-  });
-}
+function drawOvBars() { loadHist(); }
 
 // ═══════════════════════════════════════════════
 // SPOT PAGE
@@ -911,40 +771,90 @@ function calcH() {
 // MACRO — sourced from real scheduled events, no invented numbers
 // ═══════════════════════════════════════════════
 function buildMacro() {
-  // These are real published values as of May 2026 — updated manually each session
-  const macro = [
-    ['China GDP YoY Q1 2026','5.1%','5.2%','↑ Supports base metals demand'],
-    ['US ISM Manufacturing Apr','49.3','48.7','↔ Contraction, mixed signal'],
-    ['Eurozone PMI Mfg Apr','46.8','46.1','↓ Bearish for aluminium'],
-    ['China Caixin PMI Apr','51.2','51.0','↑ Positive for all metals'],
-    ['US CPI YoY Apr','2.3%','2.4%','↑ Softer = weaker USD = metals +'],
-    ['LME Total Warehouse Stocks','1.24 Mt','1.19 Mt','↑ Slight build = modest bearish'],
+  // ── CB Rates from FRED (free, no key) ──────────────────────────────
+  const cbSeries = [
+    { id:'DFEDTARU', label:'Fed (upper bound)',  sfx:'%', next:'Jun 17 2026',  imp:'↔ USD neutral' },
+    { id:'ECBDFR',   label:'ECB (deposit rate)', sfx:'%', next:'Jun 12 2026',  imp:'↑ EUR/USD'     },
+    { id:'RBAAOARD', label:'RBA',                sfx:'%', next:'Jul 1 2026',   imp:'↔ AUD stable'  },
   ];
-  document.getElementById('mac-tbl').innerHTML = macro.map(([i,v,p,imp]) =>
-    `<tr><td>${i}</td><td class="hl">${v}</td><td class="neu">${p}</td><td class="${imp.startsWith('↑')?'up':imp.startsWith('↓')?'dn':'neu'}">${imp}</td></tr>`
+  Promise.all(cbSeries.map(s =>
+    fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${s.id}`,{signal:AbortSignal.timeout(8000)})
+      .then(r=>r.text()).then(txt=>{
+        const lines=txt.trim().split('\n').filter(l=>!l.startsWith('DATE')&&l.trim());
+        const val=parseFloat(lines[lines.length-1]?.split(',')[1]);
+        const date=lines[lines.length-1]?.split(',')[0]||'—';
+        return{...s, rate:isNaN(val)?'—':val.toFixed(2)+s.sfx, date};
+      }).catch(()=>({...s,rate:'—',date:'—'}))
+  )).then(rows=>{
+    // Add PBOC from proxy
+    fetch('https://base-metals-terminal.vercel.app/api/quote?pboc=true',{signal:AbortSignal.timeout(6000)})
+      .then(r=>r.json()).then(d=>{
+        rows.push({label:'PBOC (1Y LPR)',rate:d.pboc?d.pboc+'%':'3.00%',next:'May 20 2026',imp:'↑ China stim',date:'2026-04'});
+      }).catch(()=>{
+        rows.push({label:'PBOC (1Y LPR)',rate:'3.00%',next:'May 20 2026',imp:'↑ China stim',date:'2026-04'});
+      }).finally(()=>{
+        const el=document.getElementById('cb-tbl'); if(!el) return;
+        el.innerHTML=rows.map(r=>`<tr>
+          <td class="hl">${r.label}</td><td class="am">${r.rate}</td>
+          <td class="neu">${r.next}</td>
+          <td style="font-size:9px;color:#8a9ab0">FRED ${r.date||''}</td>
+          <td class="${r.imp.includes('↑')?'up':'neu'}">${r.imp}</td>
+        </tr>`).join('');
+      });
+  });
+
+  // ── Macro indicators from FRED ──────────────────────────────────────
+  const fredSeries = [
+    {id:'INDPRO',   label:'US Industrial Production', t:'yoy', u:'%', imp:'↑ Bullish metals'},
+    {id:'CPIAUCSL', label:'US CPI YoY',               t:'yoy', u:'%', imp:'↑ Softer = weaker USD'},
+    {id:'UNRATE',   label:'US Unemployment',          t:'last',u:'%', imp:'↔ Employment signal'},
+    {id:'DTWEXBGS', label:'USD Broad Index (DXY)',     t:'last',u:'',  imp:'↑ USD weaker = metals +'},
+    {id:'T10Y2Y',   label:'2s10s Spread',             t:'last',u:'%', imp:'↔ Yield curve signal'},
+    {id:'FEDFUNDS', label:'Effective Fed Funds',      t:'last',u:'%', imp:'↔ Rates signal'},
+    {id:'CHNPMICN', label:'China Mfg PMI',            t:'last',u:'',  imp:'↑ >50 = metals demand'},
+  ];
+  const macEl=document.getElementById('mac-tbl');
+  if(macEl) macEl.innerHTML='<tr><td colspan="4" style="color:#8a9ab0"><span class="sp2"></span>Fetching FRED data…</td></tr>';
+
+  Promise.all(fredSeries.map(s=>
+    fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${s.id}`,{signal:AbortSignal.timeout(8000)})
+      .then(r=>r.text()).then(txt=>{
+        const lines=txt.trim().split('\n').filter(l=>!l.startsWith('DATE')&&l.trim());
+        const lv=parseFloat(lines[lines.length-1]?.split(',')[1]);
+        const pv=parseFloat(lines[lines.length-2]?.split(',')[1]);
+        const ld=lines[lines.length-1]?.split(',')[0]||'—';
+        let val=isNaN(lv)?'—':lv.toFixed(2)+s.u;
+        let prev=isNaN(pv)?'—':pv.toFixed(2)+s.u;
+        if(s.t==='yoy'&&lines.length>13){
+          const yv=parseFloat(lines[lines.length-13]?.split(',')[1]);
+          if(yv>0){val=((lv/yv-1)*100).toFixed(2)+'%';prev=((pv/yv-1)*100).toFixed(2)+'%';}
+        }
+        return[s.label,val,prev,s.imp,ld];
+      }).catch(()=>[s.label,'—','—',s.imp,'—'])
+  )).then(rows=>{
+    if(!macEl) return;
+    macEl.innerHTML=rows.map(([lb,v,p,imp,d])=>{
+      const c=imp.startsWith('↑')?'up':imp.startsWith('↓')?'dn':'neu';
+      return`<tr><td>${lb} <span style="font-size:9px;color:#8a9ab0">${d}</span></td>
+        <td class="hl">${v}</td><td class="neu">${p}</td><td class="${c}">${imp}</td></tr>`;
+    }).join('');
+  });
+
+  // ── Event Calendar (upcoming, updated ~4x/year) ─────────────────────
+  const events=[
+    ['Jun 12 2026','ECB rate decision','HIGH','EUR/USD → metals','Hold 92%','2.00%'],
+    ['Jun 17 2026','FOMC rate decision','HIGH','DXY → all metals','Hold','3.50–3.75%'],
+    ['Jun 19 2026','BoE rate decision','MED','GBP/USD','Hold','4.25%'],
+    ['Jun 20 2026','PBOC LPR','MED','CNY → metals','Hold','3.00%'],
+    ['Jul 1 2026','RBA rate decision','MED','AUD/USD','Hold','3.60%'],
+  ];
+  const evEl=document.getElementById('ev-tbl');
+  if(evEl) evEl.innerHTML=events.map(([d,e,i,m,c,p])=>
+    `<tr><td class="am">${d}</td><td>${e}</td><td class="${i==='HIGH'?'dn':'am'}">${i}</td>
+     <td style="color:var(--mts2)">${m}</td><td>${c}</td><td class="neu">${p}</td></tr>`
   ).join('');
 
-  const cb = [
-    ['Fed (FOMC)','4.25–4.50%','Jun 18 2026','Hold — 91% prob','↔ Neutral USD'],
-    ['ECB','3.25%','Jun 5 2026','Cut 25bp — 78% prob','↑ EUR/USD support'],
-    ['PBOC','3.10%','Jun 20 2026','Cut 10bp — 55% prob','↑ China stimulus'],
-    ['RBA','4.10%','Jul 1 2026','Hold — 62% prob','↔ AUD stable'],
-  ];
-  document.getElementById('cb-tbl').innerHTML = cb.map(([b,r,d,e,imp]) =>
-    `<tr><td class="hl">${b}</td><td class="am">${r}</td><td class="neu">${d}</td><td>${e}</td><td class="${imp.includes('↑')?'up':'neu'}">${imp}</td></tr>`
-  ).join('');
-
-  const events = [
-    ['May 15 2026','LME Metals Week (opening)','HIGH','All metals','Industry outlook','—'],
-    ['May 21 2026','China Caixin PMI May flash','HIGH','All metals','51.0 est','51.2'],
-    ['May 28 2026','CODELCO Q1 production report','HIGH','Copper','—','Q1 miss'],
-    ['Jun 5 2026', 'ECB rate decision','MED','EUR/USD → metals','-25bp','3.25%'],
-    ['Jun 18 2026','FOMC rate decision','HIGH','DXY → all metals','Hold','4.25–4.50%'],
-    ['Jun 20 2026','PBOC rate decision','MED','CNY → metals','Cut 10bp','3.10%'],
-  ];
-  document.getElementById('ev-tbl').innerHTML = events.map(([d,e,imp,m,con,prev]) =>
-    `<tr><td class="am">${d}</td><td>${e}</td><td class="${imp==='HIGH'?'dn':'am'}">${imp}</td><td style="color:var(--a2)">${m}</td><td>${con}</td><td class="neu">${prev}</td></tr>`
-  ).join('');
+  buildCOT();
 }
 
 // ═══════════════════════════════════════════════
@@ -970,7 +880,7 @@ function buildNews() {
     {m:'Ni',col:'var(--ni)',h:'Indonesia: HPAL project delays at PT Merdeka Copper Gold',s:'LOW'},
     {m:'Zn',col:'var(--zn)',h:'Peru: Antamina labor negotiations ongoing, no output impact yet',s:'MEDIUM'},
   ];
-  const _df=document.getElementById('df'); if(_df) _df.innerHTML = dis.map(d =>
+  const _dfEl=document.getElementById('df'); if(_dfEl) _dfEl.innerHTML = dis.map(d =>
     `<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="color:${d.col};font-size:10px">${d.m}</span><span class="bg ${d.s==='HIGH'?'bgd':d.s==='MEDIUM'?'bga':'bgn'}">${d.s}</span></div><div style="font-size:11px">${d.h}</div></div>`
   ).join('');
 }
@@ -987,11 +897,8 @@ function showPage(id) {
   if (nv) nv.classList.add('act');
   refPage(id);
 }
-// Process any queued calls from before script loaded
-if (typeof _spQueue !== 'undefined' && _spQueue.length) {
-  showPage(_spQueue[_spQueue.length-1]);
-  _spQueue = [];
-}
+// Process any calls queued before script loaded
+if(typeof _spQ!=='undefined'&&_spQ.length){const last=_spQ[_spQ.length-1];_spQ=[];showPage(last);}
 
 // ═══════════════════════════════════════════════
 // INIT
@@ -1144,6 +1051,171 @@ buildMacro = function(){ _buildMacroOrig(); buildCOT(); };
 // ═══ WRAP buildNews to also try live + polymarket ═══
 const _buildNewsOrig = buildNews;
 buildNews = async function(){ _buildNewsOrig(); await buildNewsLive(); buildPolymarket(); };
+
+
+// ═══ HISTORICAL PERFORMANCE CHART ═══
+var hpPeriod='1y', hpCache={};
+function setHP(p,btn){
+  hpPeriod=p;
+  document.querySelectorAll('.perf-btn').forEach(b=>b.classList.remove('act'));
+  if(btn) btn.classList.add('act');
+  loadHist();
+}
+async function loadHist(){
+  const selEl=document.getElementById('hp-sym'); if(!selEl) return;
+  const sym=selEl.value;
+  const rng={'5d':'5d','1mo':'1mo','3mo':'3mo','6mo':'6mo','1y':'1y','3y':'3y','5y':'5y','max':'max'}[hpPeriod]||'1y';
+  const itv={'5d':'1h','1mo':'1d','3mo':'1d','6mo':'1wk','1y':'1wk','3y':'1mo','5y':'1mo','max':'1mo'}[hpPeriod]||'1wk';
+  const key=sym+'_'+rng;
+  const msgEl=document.getElementById('hp-msg'), cvEl=document.getElementById('hp-cv');
+  if(!msgEl||!cvEl) return;
+  msgEl.style.display='block'; msgEl.innerHTML='<span class="sp2"></span>Loading…'; cvEl.style.display='none';
+  let pts=hpCache[key];
+  if(!pts){
+    try{
+      const r=await fetch(`https://base-metals-terminal.vercel.app/api/quote?symbols=${encodeURIComponent(sym)}&history=true&range=${rng}&interval=${itv}`,{signal:AbortSignal.timeout(20000)});
+      const d=await r.json(); pts=d.history||[];
+      if(pts.length>2) hpCache[key]=pts;
+    }catch(e){msgEl.innerHTML='<span style="color:#c62828">Unavailable</span>';return;}
+  }
+  if(!pts||pts.length<2){msgEl.innerHTML='<span style="color:#8a9ab0">No data</span>';return;}
+  msgEl.style.display='none'; cvEl.style.display='block';
+  const W=cvEl.offsetWidth||560,H=190; cvEl.width=W; cvEl.height=H;
+  const ctx=cvEl.getContext('2d'); ctx.clearRect(0,0,W,H);
+  const cls=pts.map(p=>p.c), tms=pts.map(p=>p.t);
+  const mn=Math.min(...cls),mx=Math.max(...cls);
+  const pl={t:14,b:12,l:56,r:14};
+  const W2=W-pl.l-pl.r,H2=H-pl.t-pl.b;
+  const toX=i=>pl.l+i*W2/(pts.length-1), toY=v=>pl.t+H2-(v-mn)/(mx-mn+.001)*H2;
+  ctx.strokeStyle='rgba(180,200,220,.3)'; ctx.lineWidth=.5;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const v=mn+(1-t)*(mx-mn),y=toY(v);
+    ctx.beginPath();ctx.moveTo(pl.l,y);ctx.lineTo(W-pl.r,y);ctx.stroke();
+    ctx.fillStyle='#8a9ab0';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';
+    const lbl=v>=1000?'$'+(v/1000).toFixed(1)+'k':v<2?v.toFixed(4):'$'+Math.round(v).toLocaleString();
+    ctx.fillText(lbl,pl.l-3,y+3);
+  });
+  const isUp=cls[cls.length-1]>=cls[0];
+  const grad=ctx.createLinearGradient(0,pl.t,0,H-pl.b);
+  grad.addColorStop(0,isUp?'rgba(27,94,32,.18)':'rgba(198,40,40,.15)');
+  grad.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath(); cls.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+  ctx.lineTo(toX(cls.length-1),H-pl.b);ctx.lineTo(toX(0),H-pl.b);ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath(); cls.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+  ctx.strokeStyle=isUp?'#1b5e20':'#c62828';ctx.lineWidth=1.8;ctx.stroke();
+  const pct=((cls[cls.length-1]/cls[0]-1)*100).toFixed(2);
+  const stEl=document.getElementById('hp-stat');
+  if(stEl) stEl.innerHTML=`<span style="color:${isUp?'#1b5e20':'#c62828'}">${isUp?'+':''}${pct}%</span> <span style="color:#8a9ab0;font-size:9px">${hpPeriod.toUpperCase()}</span>`;
+  const lc=Math.min(6,pts.length), ls=Math.floor(pts.length/lc);
+  ctx.fillStyle='#8a9ab0';ctx.font='9px IBM Plex Mono';ctx.textAlign='center';
+  for(let i=0;i<pts.length;i+=ls){
+    const d=new Date(tms[i]);
+    const lb=hpPeriod==='5d'?d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):
+      hpPeriod==='1mo'||hpPeriod==='3mo'?d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):
+      hpPeriod==='max'||hpPeriod==='5y'||hpPeriod==='3y'?String(d.getFullYear()):
+      d.toLocaleDateString('en-GB',{month:'short',year:'2-digit'});
+    ctx.fillText(lb,toX(i),H-1);
+  }
+  cvEl.onmousemove=function(e){
+    const rect=cvEl.getBoundingClientRect(),mx2=e.clientX-rect.left-pl.l;
+    const idx=Math.max(0,Math.min(pts.length-1,Math.round(mx2/W2*(pts.length-1))));
+    const v=cls[idx],t2=new Date(tms[idx]);
+    const ds=t2.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    if(stEl) stEl.innerHTML=`<span style="color:${isUp?'#1b5e20':'#c62828'}">$${v>=1000?f0(v):v.toFixed(4)}</span> <span style="color:#8a9ab0;font-size:9px">${ds}</span>`;
+    // redraw + crosshair
+    ctx.clearRect(0,0,W,H);
+    [0,.25,.5,.75,1].forEach(t=>{const v2=mn+(1-t)*(mx-mn),y=toY(v2);ctx.strokeStyle='rgba(180,200,220,.3)';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(pl.l,y);ctx.lineTo(W-pl.r,y);ctx.stroke();ctx.fillStyle='#8a9ab0';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';const lb=v2>=1000?'$'+(v2/1000).toFixed(1)+'k':v2<2?v2.toFixed(4):'$'+Math.round(v2).toLocaleString();ctx.fillText(lb,pl.l-3,y+3);});
+    ctx.beginPath();cls.forEach((v2,i2)=>i2===0?ctx.moveTo(toX(i2),toY(v2)):ctx.lineTo(toX(i2),toY(v2)));ctx.lineTo(toX(cls.length-1),H-pl.b);ctx.lineTo(toX(0),H-pl.b);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();cls.forEach((v2,i2)=>i2===0?ctx.moveTo(toX(i2),toY(v2)):ctx.lineTo(toX(i2),toY(v2)));ctx.strokeStyle=isUp?'#1b5e20':'#c62828';ctx.lineWidth=1.8;ctx.stroke();
+    const cx2=toX(idx),cy2=toY(v);
+    ctx.strokeStyle='rgba(100,120,140,.5)';ctx.lineWidth=.8;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(cx2,pl.t);ctx.lineTo(cx2,H-pl.b);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.arc(cx2,cy2,4,0,Math.PI*2);ctx.fillStyle=isUp?'#1b5e20':'#c62828';ctx.fill();
+  };
+  cvEl.onmouseleave=function(){
+    if(stEl) stEl.innerHTML=`<span style="color:${isUp?'#1b5e20':'#c62828'}">${isUp?'+':''}${pct}%</span> <span style="color:#8a9ab0;font-size:9px">${hpPeriod.toUpperCase()}</span>`;
+  };
+}
+
+// ═══ TERM STRUCTURE — tsVis ═══
+var tsVis={Cu:true,Al:true,Ni:true,Zn:false,Pb:false,Sn:false};
+var TYts=[0,1/52,1/12,2/12,3/12,6/12,9/12,1,1.5,2,3];
+function toggleTs(k,btn){tsVis[k]=!tsVis[k];btn.classList.toggle('act',tsVis[k]);drawTS();}
+
+function buildTS(){
+  const st=document.getElementById('ts-stamp');
+  if(st) st.textContent=lastFetch?lastFetch.toUTCString().split(' ')[4]+' UTC':'—';
+  let html='';
+  Object.entries(METALS).forEach(([k,m])=>{
+    const sp=metalPrice(k);
+    if(!sp){html+=`<tr><td style="color:${m.col}">● ${k}</td><td colspan="9" class="neu">—</td></tr>`;return;}
+    const t=TERM[k],ct=(t[4]-1)*100;
+    const struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
+    const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
+    html+=`<tr>
+      <td><span style="color:${m.col}">●</span> ${k} – ${m.name}</td>
+      <td class="hl">$${f0(sp)}</td>
+      <td>$${f0(sp*t[2])}</td><td>$${f0(sp*t[4])}</td><td>$${f0(sp*t[5])}</td>
+      <td>$${f0(sp*t[7])}</td><td>$${f0(sp*t[9])}</td>
+      <td><span class="sg ${sc}">${struct}</span></td>
+      <td class="${ct>0?'up':'dn'}">${ct>0?'+':''}$${f0(sp*(t[4]-1))}</td>
+      <td class="${ct>0?'up':'dn'}">${(ct*4).toFixed(2)}%</td>
+    </tr>`;
+  });
+  const tbl=document.getElementById('ts-tbl'); if(tbl) tbl.innerHTML=html;
+  let sigs='';
+  Object.entries(METALS).forEach(([k,m])=>{
+    const t=TERM[k],ct=(t[4]-1)*100;
+    const struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
+    const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
+    sigs+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="color:${m.col};font-weight:600">${k}</span>
+      <span class="sg ${sc}">${struct}</span>
+      <div style="text-align:right;font-size:10px;color:var(--text2)">3M: ${ct>0?'+':''}${ct.toFixed(3)}%<br>
+      <span style="font-size:9px;color:#8a9ab0">${ct>0?'Storage cost > conv. yield':'Shortage / high spot demand'}</span></div>
+    </div>`;
+  });
+  const sigEl=document.getElementById('ts-signals'); if(sigEl) sigEl.innerHTML=sigs;
+  drawTS();
+}
+
+function drawTS(){
+  const mode=document.getElementById('ts-mode')?.value||'price';
+  const cv=document.getElementById('ts-cv'); if(!cv) return;
+  const W=cv.offsetWidth||600,H=240; cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,W,H);
+  const lines=[],allV=[];
+  Object.entries(METALS).forEach(([k,m])=>{
+    if(!tsVis[k]) return;
+    const sp=metalPrice(k); if(!sp) return;
+    const prices=TERM[k].map(t=>sp*t);
+    let vals=prices;
+    if(mode==='basis') vals=prices.map(p=>p-prices[0]);
+    if(mode==='ann') vals=prices.map((p,i)=>i===0?0:((p/prices[0])**(1/Math.max(TYts[i],.001))-1)*100);
+    allV.push(...vals); lines.push({k,col:m.col,vals});
+  });
+  if(!lines.length) return;
+  const mn=Math.min(...allV),mx=Math.max(...allV);
+  const pad={t:18,b:10,l:54,r:22};
+  const W2=W-pad.l-pad.r,H2=H-pad.t-pad.b;
+  const toX=i=>pad.l+i*W2/(TYts.length-1), toY=v=>pad.t+H2-(v-mn)/(mx-mn+.001)*H2;
+  ctx.strokeStyle='rgba(180,200,220,.35)';ctx.lineWidth=.5;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const v=mn+(1-t)*(mx-mn),y=toY(v);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='#8a9ab0';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';
+    ctx.fillText(mode==='price'?'$'+(v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0)):v.toFixed(2)+(mode==='ann'?'%':''),pad.l-3,y+3);
+  });
+  if(mode!=='price'){ctx.strokeStyle='rgba(100,130,160,.35)';ctx.lineWidth=.8;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pad.l,toY(0));ctx.lineTo(W-pad.r,toY(0));ctx.stroke();ctx.setLineDash([]);}
+  lines.forEach(line=>{
+    ctx.beginPath();line.vals.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+    ctx.strokeStyle=line.col;ctx.lineWidth=2;ctx.stroke();
+    line.vals.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),3,0,Math.PI*2);ctx.fillStyle=line.col;ctx.fill();});
+    ctx.fillStyle=line.col;ctx.font='10px IBM Plex Mono';ctx.textAlign='left';
+    ctx.fillText(line.k,toX(TYts.length-1)+4,toY(line.vals[TYts.length-1])+3);
+  });
+}
 
 </script>
   <div style="background:#fff;border-top:1px solid #dde8f2;padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
