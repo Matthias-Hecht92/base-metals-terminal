@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>function showPage(id){if(window._spReady){window._doShowPage(id);}else{window._spPending=id;}}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Metal Trading SAS — Base Metals Terminal</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -85,21 +86,6 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
 </style>
 </head>
 <body>
-<script>
-function showPage(id) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { showPage(id); });
-    return;
-  }
-  document.querySelectorAll('.pg').forEach(p => p.classList.remove('act'));
-  document.querySelectorAll('.nv').forEach(n => n.classList.remove('act'));
-  const pg = document.getElementById('page-' + id);
-  if (pg) pg.classList.add('act');
-  const nv = document.getElementById('nv-' + id);
-  if (nv) nv.classList.add('act');
-  if (typeof window._refPage === 'function') window._refPage(id);
-}
-</script>
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:12px">
     <img src="logo.jpeg" height="36" style="object-fit:contain;display:block">
@@ -183,76 +169,37 @@ function showPage(id) {
           <tbody id="sp-fx"><tr><td colspan="6" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
         </div>
         <div class="pn">
-          <div class="ph">
-            <span class="pt">Historical Performance</span>
+          <div class="ph"><span class="pt">Historical Performance</span>
             <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
-              <select id="hp2-sym" style="width:120px;font-size:10px" onchange="loadHist2()">
-                <option value="HG=F">Copper</option>
-                <option value="ALI=F">Aluminium</option>
-                <option value="NI=F">Nickel</option>
-                <option value="ZNC=F">Zinc</option>
-                <option value="PB=F">Lead</option>
-                <option value="SN=F">Tin</option>
-                <option value="EURUSD=X">EUR/USD</option>
-                <option value="CNY=X">USD/CNY</option>
-                <option value="AUDUSD=X">AUD/USD</option>
+              <select id="hp2-sym" style="width:120px;font-size:10px" onchange="hp2Load()">
+                <option value="HG=F">Copper</option><option value="ALI=F">Aluminium</option>
+                <option value="NI=F">Nickel</option><option value="ZNC=F">Zinc</option>
+                <option value="PB=F">Lead</option><option value="SN=F">Tin</option>
+                <option value="EURUSD=X">EUR/USD</option><option value="CNY=X">USD/CNY</option>
                 <option value="JPY=X">USD/JPY</option>
               </select>
               <div style="display:flex;gap:2px">
-                <button class="perf-btn" onclick="setHP2('5d',this)" class="perf-btn2">5D</button>
-                <button class="perf-btn" onclick="setHP2('1mo',this)">1M</button>
-                <button class="perf-btn" onclick="setHP2('3mo',this)">3M</button>
-                <button class="perf-btn" onclick="setHP2('6mo',this)">6M</button>
-                <button class="perf-btn act" onclick="setHP2('1y',this)">1Y</button>
-                <button class="perf-btn" onclick="setHP2('3y',this)">3Y</button>
-                <button class="perf-btn" onclick="setHP2('5y',this)">5Y</button>
-                <button class="perf-btn" onclick="setHP2('max',this)">MAX</button>
+                <button class="perf-btn" onclick="hp2Set('5d',this)">5D</button>
+                <button class="perf-btn" onclick="hp2Set('1mo',this)">1M</button>
+                <button class="perf-btn" onclick="hp2Set('3mo',this)">3M</button>
+                <button class="perf-btn act" onclick="hp2Set('1y',this)">1Y</button>
+                <button class="perf-btn" onclick="hp2Set('3y',this)">3Y</button>
+                <button class="perf-btn" onclick="hp2Set('5y',this)">5Y</button>
+                <button class="perf-btn" onclick="hp2Set('max',this)">MAX</button>
               </div>
               <span id="hp2-stat" style="font-size:10px;font-weight:600"></span>
             </div>
           </div>
           <div class="pb">
-            <div id="hp2-msg" style="color:#8a9ab0;font-size:11px;padding:8px 0"><span class="sp2"></span>Loading…</div>
-            <canvas id="hp2-cv" height="200" style="display:none"></canvas>
+            <div id="hp2-msg" style="color:#8a9ab0;font-size:11px;padding:8px"><span class="sp2"></span>Loading…</div>
+            <canvas id="hp2-cv" height="195" style="display:none"></canvas>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="pg" id="page-termstruct">
-      <div class="sh"><div class="st">Term Structure</div><div class="ss">CONTANGO / BACKWARDATION — LIVE SPOT + MODELED SPREADS</div></div>
-      <div class="pn" style="margin-bottom:12px">
-        <div class="ph"><span class="pt">All Metals — Curve Structure</span><span class="pk" id="ts-stamp">—</span></div>
-        <div class="pb tw"><table><thead><tr><th>METAL</th><th>SPOT</th><th>1M</th><th>3M</th><th>6M</th><th>12M</th><th>24M</th><th>STRUCTURE</th><th>SPREAD 3M ($/t)</th><th>ANN. %</th></tr></thead>
-        <tbody id="ts-tbl"><tr><td colspan="10" style="color:#8a9ab0"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
-      </div>
-      <div class="g2">
-        <div class="pn">
-          <div class="ph"><span class="pt">Term Structure Chart</span>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-              <button class="perf-btn act" id="ts-btn-Cu" onclick="toggleTs('Cu',this)">Cu</button>
-              <button class="perf-btn act" id="ts-btn-Al" onclick="toggleTs('Al',this)">Al</button>
-              <button class="perf-btn act" id="ts-btn-Ni" onclick="toggleTs('Ni',this)">Ni</button>
-              <button class="perf-btn" id="ts-btn-Zn" onclick="toggleTs('Zn',this)">Zn</button>
-              <button class="perf-btn" id="ts-btn-Pb" onclick="toggleTs('Pb',this)">Pb</button>
-              <button class="perf-btn" id="ts-btn-Sn" onclick="toggleTs('Sn',this)">Sn</button>
-              <select id="ts-mode" style="width:110px;margin-left:8px" onchange="drawTS()">
-                <option value="price">Price USD/t</option>
-                <option value="basis">Spread vs spot</option>
-                <option value="ann">Annualized %</option>
-              </select>
-            </div>
-          </div>
-          <div class="pb">
-            <canvas id="ts-cv" height="240"></canvas>
-            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:#8a9ab0"><span>SPOT</span><span>1W</span><span>1M</span><span>2M</span><span>3M</span><span>6M</span><span>9M</span><span>12M</span><span>18M</span><span>24M</span><span>36M</span></div>
-          </div>
-        </div>
-        <div class="pn"><div class="ph"><span class="pt">Contango / Backwardation Signals</span></div><div class="pb"><div id="ts-signals"></div></div></div>
-      </div>
-    </div>
     <div class="pg" id="page-pricer">
-      <div class="sh"><div class="st">Options Pricer</div><div class="ss">BLACK-76 // SPOT LIVE LME</div></div>
+      <div class="sh"><div class="st">Options Pricer</div><div class="ss">BLACK-76 // SPOT SYNCED FROM YAHOO FINANCE</div></div>
       <div class="g2">
         <div>
           <div class="pn" style="margin-bottom:12px">
@@ -268,7 +215,7 @@ function showPage(id) {
               </div>
               <div class="fr">
                 <div><div class="fl">Tenor T (years)</div><input type="number" id="p-T" value="0.5" step="0.05" oninput="calcOpt()"></div>
-                <div><div class="fl">Rate r (%)</div><input type="number" id="p-r" value="3.75" step="0.1" oninput="calcOpt()"></div>
+                <div><div class="fl">Rate r (%)</div><input type="number" id="p-r" value="4.5" step="0.1" oninput="calcOpt()"></div>
               </div>
               <div class="fr">
                 <div><div class="fl">Implied Vol σ (%)</div><input type="number" id="p-sig" step="0.5" oninput="calcOpt()"></div>
@@ -307,16 +254,11 @@ function showPage(id) {
     </div>
 
     <div class="pg" id="page-fx">
-      <div class="sh"><div class="st">FX Rates</div><div class="ss">YAHOO FINANCE — LIVE // MAJORS + ASIAN CCY</div></div>
+      <div class="sh"><div class="st">FX Rates</div><div class="ss">YAHOO FINANCE — LIVE</div></div>
       <div class="g4" style="margin-bottom:14px" id="fx-kpis"></div>
-      <div style="display:flex;gap:6px;margin-bottom:10px">
-        <button class="perf-btn act" id="fx-grp-all" onclick="setFxGroup('all',this)">All</button>
-        <button class="perf-btn" id="fx-grp-Majors" onclick="setFxGroup('Majors',this)">Majors</button>
-        <button class="perf-btn" id="fx-grp-Asia" onclick="setFxGroup('Asia',this)">Asian CCY</button>
-      </div>
       <div class="g2">
         <div class="pn"><div class="ph"><span class="pt">FX Pairs</span><span class="pk" id="fx-stamp">—</span></div>
-          <div class="pb tw"><table><thead><tr><th>PAIR</th><th>RATE</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th><th>3M FWD (est.)</th><th>SWAP %PA</th><th>NOTE</th></tr></thead>
+          <div class="pb tw"><table><thead><tr><th>PAIR</th><th>RATE</th><th>CHG</th><th>CHG%</th><th>HIGH</th><th>LOW</th><th>3M FWD (est.)</th><th>SWAP COST %PA</th><th>NOTE</th></tr></thead>
           <tbody id="fx-tbl"><tr><td colspan="9" style="color:var(--text3)"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
         </div>
         <div class="pn"><div class="ph"><span class="pt">Cross-Rate Matrix</span></div><div class="pb"><div id="fx-cross"><span class="sp2"></span>Loading…</div></div></div>
@@ -330,7 +272,7 @@ function showPage(id) {
           <div class="pb">
             <div class="fr">
               <div><div class="fl">Exposure (USD)</div><input type="number" id="h-exp" value="5000000" oninput="calcH()"></div>
-              <div><div class="fl">CCY Pair</div><select id="h-pair" onchange="calcH()"></select></div>
+              <div><div class="fl">CCY Pair</div><select id="h-pair" onchange="calcH()" id="h-pair"></select></div>
             </div>
             <div class="fr">
               <div><div class="fl">Tenor (months)</div><input type="number" id="h-ten" value="3" min="1" max="24" oninput="calcH()"></div>
@@ -347,6 +289,39 @@ function showPage(id) {
       </div>
     </div>
 
+    <div class="pg" id="page-termstruct">
+      <div class="sh"><div class="st">Term Structure</div><div class="ss">CONTANGO / BACKWARDATION — LIVE SPOT + MODELED SPREADS</div></div>
+      <div class="wb">⚠ Spot prices live from westmetall.com (LME official). Forward spreads modeled from typical LME structure. Official LME forward data requires paid access.</div>
+      <div class="pn" style="margin-bottom:12px">
+        <div class="ph"><span class="pt">All Metals — Curve Structure</span><span class="pk" id="ts-stamp">—</span></div>
+        <div class="pb tw"><table><thead><tr><th>METAL</th><th>SPOT</th><th>1M</th><th>3M</th><th>6M</th><th>12M</th><th>24M</th><th>STRUCTURE</th><th>SPREAD 3M ($/t)</th><th>ANN. %</th></tr></thead>
+        <tbody id="ts-tbl"><tr><td colspan="10" style="color:#8a9ab0"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+      </div>
+      <div class="g2">
+        <div class="pn">
+          <div class="ph"><span class="pt">Term Structure Chart</span>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+              <button class="perf-btn act" id="ts-btn-Cu" onclick="toggleTs('Cu',this)">Cu</button>
+              <button class="perf-btn act" id="ts-btn-Al" onclick="toggleTs('Al',this)">Al</button>
+              <button class="perf-btn act" id="ts-btn-Ni" onclick="toggleTs('Ni',this)">Ni</button>
+              <button class="perf-btn" id="ts-btn-Zn" onclick="toggleTs('Zn',this)">Zn</button>
+              <button class="perf-btn" id="ts-btn-Pb" onclick="toggleTs('Pb',this)">Pb</button>
+              <button class="perf-btn" id="ts-btn-Sn" onclick="toggleTs('Sn',this)">Sn</button>
+              <select id="ts-mode" style="width:110px;margin-left:8px" onchange="drawTS()">
+                <option value="price">Price USD/t</option>
+                <option value="basis">Spread vs spot</option>
+                <option value="ann">Annualized %</option>
+              </select>
+            </div>
+          </div>
+          <div class="pb">
+            <canvas id="ts-cv" height="240"></canvas>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:#8a9ab0"><span>SPOT</span><span>1W</span><span>1M</span><span>2M</span><span>3M</span><span>6M</span><span>9M</span><span>12M</span><span>18M</span><span>24M</span><span>36M</span></div>
+          </div>
+        </div>
+        <div class="pn"><div class="ph"><span class="pt">Contango / Backwardation Signals</span></div><div class="pb"><div id="ts-signals"></div></div></div>
+      </div>
+    </div>
     <div class="pg" id="page-macro">
       <div class="sh"><div class="st">Macro Dashboard</div><div class="ss">FRED API · CFTC · LIVE DATA</div></div>
       <div class="g2" style="margin-bottom:12px">
@@ -379,9 +354,6 @@ function showPage(id) {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-
-
 // ═══════════════════════════════════════════════
 // YAHOO FINANCE CONFIG — tickers only, no hardcoded prices
 // ═══════════════════════════════════════════════
@@ -411,7 +383,7 @@ const FX_PAIRS = [
 const TERM = {
   Cu: [1,1.0005,1.001,1.0015,1.002,1.003,1.004,1.005,1.007,1.008,1.01],
   Al: [1,1.0003,1.0008,1.0012,1.002,1.003,1.004,1.005,1.006,1.008,1.011],
-  Ni: [1,1.0004,1.001,1.0018,1.011,1.019,1.025,1.031,1.044,1.054,1.072],
+  Ni: [1,.9998,.9994,.999,.998,.997,.996,.995,.993,.992,.99],
   Zn: [1,1.0004,1.001,1.0016,1.002,1.003,1.004,1.005,1.007,1.009,1.012],
   Pb: [1,1.0003,1.0007,1.0011,1.0015,1.002,1.003,1.004,1.005,1.007,1.009],
   Sn: [1,1.001,1.002,1.003,1.004,1.006,1.008,1.01,1.013,1.015,1.02],
@@ -429,42 +401,75 @@ let countdown = 60;
 // YAHOO FINANCE FETCH
 // Uses query2 which has slightly more permissive CORS than query1
 // ═══════════════════════════════════════════════
-async function fetchOneTicker(sym) {
-  try {
-    const url = `https://base-metals-terminal.vercel.app/api/quote?symbols=${encodeURIComponent(sym)}`;
-    const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
-    if (!r.ok) return 0;
-    const json = await r.json();
-    const quotes = json?.quoteResponse?.result || [];
-    quotes.forEach(q => {
-      D[q.symbol] = {
-        price: q.regularMarketPrice, change: q.regularMarketChange,
-        pct: q.regularMarketChangePercent, open: q.regularMarketOpen,
-        high: q.regularMarketDayHigh, low: q.regularMarketDayLow,
-        prev: q.regularMarketPreviousClose, w52h: q.fiftyTwoWeekHigh,
-        w52l: q.fiftyTwoWeekLow, state: q.marketState, name: q.shortName,
-      };
-    });
-    return quotes.length;
-  } catch(e) { return 0; }
+async function fetchYahoo(tickers) {
+  const fields = 'regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketOpen,regularMarketDayHigh,regularMarketDayLow,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketState,shortName';
+  const url = `https://base-metals-terminal.vercel.app/api/quote?symbols=${tickers.join(',')}`;
+
+  const resp = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+    signal: AbortSignal.timeout(8000)
+  });
+
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const json = await resp.json();
+  const quotes = json?.quoteResponse?.result || [];
+  if (!quotes.length) throw new Error('Empty response');
+
+  quotes.forEach(q => {
+    D[q.symbol] = {
+      price:  q.regularMarketPrice,
+      change: q.regularMarketChange,
+      pct:    q.regularMarketChangePercent,
+      open:   q.regularMarketOpen,
+      high:   q.regularMarketDayHigh,
+      low:    q.regularMarketDayLow,
+      prev:   q.regularMarketPreviousClose,
+      w52h:   q.fiftyTwoWeekHigh,
+      w52l:   q.fiftyTwoWeekLow,
+      state:  q.marketState,
+      name:   q.shortName,
+    };
+  });
+  return quotes.length;
 }
 
 async function fetchAll() {
   setSt('loading');
   document.getElementById('ds-msg').textContent = '';
+
   const allTickers = [
     ...Object.values(METALS).map(m => m.ticker),
     ...FX_PAIRS.map(f => f.ticker)
   ];
-  const results = await Promise.allSettled(allTickers.map(t => fetchOneTicker(t)));
-  const total = results.reduce((s,r) => s+(r.status==='fulfilled'?r.value:0), 0);
-  if (total > 0) {
-    fetchOk = true; lastFetch = new Date(); setSt('live');
-    document.getElementById('ds-last').textContent = lastFetch.toUTCString().split(' ')[4] + ' UTC';
-  } else {
-    fetchOk = false; setSt('err');
-    document.getElementById('ds-msg').textContent = '⚠ Proxy unreachable';
+
+  try {
+    // Split into batches of 8 to avoid URL length issues
+    let total = 0;
+    for (let i = 0; i < allTickers.length; i += 8) {
+      const batch = allTickers.slice(i, i + 8);
+      const n = await fetchYahoo(batch);
+      total += n;
+      if (i + 8 < allTickers.length) await sleep(200);
+    }
+
+    if (total > 0) {
+      fetchOk = true;
+      lastFetch = new Date();
+      setSt('live');
+      document.getElementById('ds-last').textContent = lastFetch.toUTCString().split(' ')[4] + ' UTC';
+    } else {
+      throw new Error('No quotes returned');
+    }
+  } catch(e) {
+    fetchOk = false;
+    setSt('err');
+    document.getElementById('ds-msg').textContent = '⚠ Yahoo Finance unreachable: ' + e.message;
+    console.error('Fetch error:', e);
   }
+
   updateAll();
 }
 
@@ -514,9 +519,9 @@ function updateAll() {
 }
 
 function refPage(id) {
-  window._refPage = refPage; // expose globally
-  if (id === 'ov')         { updOvKpis(); updOvTable(); updOvFX(); updOvSig(); loadHist(); loadHist2(); }
-  if (id === 'spot')       { buildSpot(); loadHist2(); }
+  if (id === 'ov')         { updOvKpis(); updOvTable(); updOvFX(); updOvSig(); drawOvBars(); }
+  if (id === 'spot')       buildSpot();
+  if (id === 'fwd')        drawFwd();
   if (id === 'termstruct') buildTS();
   if (id === 'pricer')     syncSpot();
   if (id === 'vol')        buildVol();
@@ -538,7 +543,12 @@ function updTopbar() {
   if (eu) { document.getElementById('tb-fx').textContent = f4(eu.price); document.getElementById('tb-fx').className = 'tbv ' + fc(eu.change); }
 }
 
-function updSidebar() { const _sb=document.getElementById('sb-metals'); if(!_sb) return; _sb.innerHTML=Object.entries(METALS).map(([k,m])=>{const p=metalPrice(k),d=metalData(k);return`<div><span class='md' style='background:${m.col}'></span>${k} – <span class='${p?fc(d?.change):"neu"}'>${p?'$'+f0(p):'—'}</span></div>`;}).join(''); }
+function updSidebar() {
+  document.getElementById('sb-metals').innerHTML = Object.entries(METALS).map(([k,m]) => {
+    const p = metalPrice(k); const d = metalData(k);
+    return `<div><span class="md" style="background:${m.col}"></span>${k} – <span class="${p ? fc(d?.change) : 'neu'}">${p ? '$' + f0(p) : '—'}</span></div>`;
+  }).join('');
+}
 
 // ═══════════════════════════════════════════════
 // OVERVIEW
@@ -772,7 +782,7 @@ function calcOpt() {
     <div class="rr"><span class="rl">Breakeven</span><span class="rv">${type==='call'?'$'+(K+price).toFixed(2):'$'+(K-price).toFixed(2)}</span></div>`;
   document.getElementById('p-greeks').innerHTML=[['Δ DELTA',g.delta.toFixed(4)],['Γ GAMMA',g.gamma.toFixed(6)],['ν VEGA',g.vega.toFixed(3)],['θ THETA',g.theta.toFixed(3)],['ρ RHO',g.rho.toFixed(3)]].map(([n,v])=>`<div class="gb"><div class="gs">${n}</div><div class="gv">${v}</div></div>`).join('');
   drawPnL(F,K,T,r,s,type,price,g.delta); drawTheta(F,K,T,r,s,type);
-  document.getElementById('p-scen').innerHTML=[-0.3,-0.2,-0.1,-0.05,0,0.05,0.1,0.2,0.3].map(mv=>{const nF=F*(1+mv),pay=type==='call'?Math.max(0,nF-K):Math.max(0,K-nF),pnl=pay-price,hp=-g.delta*(nF-F),net=pnl+hp;return`<tr><td class="${mv>0?'up':mv<0?'dn':'neu'}">${mv>0?'+':''}${(mv*100).toFixed(0)}%</td><td>$${f0(nF)}</td><td class="${fc(pnl)}">${pnl>=0?'+':''}$${pnl.toFixed(2)}</td><td class="${fc(hp)}">${hp>=0?'+':''}$${hp.toFixed(2)}</td><td class="${fc(net)}">${net>=0?'+':''}$${net.toFixed(2)}</td></tr>`;}).join('');
+  document.getElementById('p-scen').innerHTML=[-0.3,-0.2,-0.1,-0.05,0,0.05,0.1,0.2,0.3].map(mv=>{const nF=F*(1+mv); const newPrice=b76(nF,K,T,r,s,type); const pnl=newPrice-price; const hp=-g.delta*(nF-F); const net=pnl+hp; return`<tr><td class="${mv>0?'up':mv<0?'dn':'neu'}">${mv>0?'+':''}${(mv*100).toFixed(0)}%</td><td>$${f0(nF)}</td><td class="${fc(pnl)}">${pnl>=0?'+':''}$${pnl.toFixed(2)}</td><td class="${fc(hp)}">${hp>=0?'+':''}$${hp.toFixed(2)}</td><td class="${fc(net)}">${net>=0?'+':''}$${net.toFixed(2)}</td></tr>`;}).join('');
 }
 function drawPnL(F,K,T,r,s,type,price){const cv=document.getElementById('pnl-cv');if(!cv)return;const W=cv.offsetWidth||400,H=240;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const sp2=Array.from({length:80},(_,i)=>F*.6+i*F*.8/79);const pl=sp2.map(x=>(type==='call'?Math.max(0,x-K):Math.max(0,K-x))-price);const mn=Math.min(...pl),mx=Math.max(...pl);const p=28,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(sp2.length-1);ctx.strokeStyle='rgba(58,80,96,.8)';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(p,toY(0));ctx.lineTo(W-p,toY(0));ctx.stroke();const g2=ctx.createLinearGradient(0,0,0,H);g2.addColorStop(0,'rgba(48,208,144,.2)');g2.addColorStop(1,'rgba(224,80,96,.2)');ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.lineTo(toX(pl.length-1),H-p);ctx.lineTo(toX(0),H-p);ctx.closePath();ctx.fillStyle=g2;ctx.fill();ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#30d090';ctx.lineWidth=2;ctx.stroke();}
 function drawTheta(F,K,T,r,s,type){const cv=document.getElementById('tht-cv');if(!cv)return;const W=cv.offsetWidth||400,H=120;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const n=40,vs=Array.from({length:n},(_,i)=>b76(F,K,Math.max(T*(1-i/(n-1)),.001),r,s,type));const mn=Math.min(...vs),mx=Math.max(...vs);const p=20,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(n-1);ctx.strokeStyle='rgba(28,40,48,.7)';ctx.lineWidth=.5;[.25,.5,.75].forEach(t=>{const y=p+t*(H-2*p);ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(W-p,y);ctx.stroke();});ctx.beginPath();vs.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#b080f0';ctx.lineWidth=1.5;ctx.stroke();}
@@ -811,16 +821,14 @@ function buildVol() {
 // ═══════════════════════════════════════════════
 function buildFX() {
   document.getElementById('fx-stamp').textContent = lastFetch ? lastFetch.toUTCString().split(' ')[4] + ' UTC' : '—';
-  const filtered = (typeof fxGroup !== 'undefined' && fxGroup !== 'all')
-    ? FX_PAIRS.filter(f => f.grp === fxGroup) : FX_PAIRS;
 
-  document.getElementById('fx-kpis').innerHTML = FX_PAIRS.filter(f=>f.grp==='Majors').slice(0,4).map(f => {
+  document.getElementById('fx-kpis').innerHTML = FX_PAIRS.slice(0,4).map(f => {
     const d = D[f.ticker];
     if (!d) return `<div class="kp"><div class="kl">${f.pair}</div><div class="kv"><span class="sp2"></span></div></div>`;
     return `<div class="kp"><div class="kl">${f.pair}</div><div class="kv ${fc(d.change)}">${f4(d.price)}</div><div class="ks ${fc(d.change)}">${d.change>=0?'▲ +':'▼ '}${Math.abs(d.pct).toFixed(2)}%</div></div>`;
   }).join('');
 
-  document.getElementById('fx-tbl').innerHTML = filtered.map(f => {
+  document.getElementById('fx-tbl').innerHTML = FX_PAIRS.map(f => {
     const d = D[f.ticker];
     if (!d) return `<tr><td class="hl">${f.pair}</td><td colspan="8" class="neu">Loading…</td></tr>`;
     const fwd = d.price * (1 + 0.005 * 0.25);
@@ -887,7 +895,13 @@ function calcH() {
     <div class="rr"><span class="rl">Est. Swap Cost</span><span class="rv am">${sc}% (${(parseFloat(sc)*12/tenor).toFixed(2)}% pa)</span></div>
     <div class="rr"><span class="rl">Total Hedge Cost</span><span class="rv dn">$${(hedged*Math.abs(parseFloat(sc)/100)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</span></div>`;
   document.getElementById('h-scen').innerHTML = [-0.1,-0.05,-0.02,0,0.02,0.05,0.1].map(mv => {
-    const uPnl=-exp*mv, hPnl=hedged*mv-hedged*(fwd/sp-1), ben=uPnl*ratio+hPnl;
+    // uPnl: loss/gain on unhedged exposure (negative mv = USD strengthens = loss for USD seller)
+    const uPnl = -exp * mv;
+    // hPnl: gain on forward hedge (locked in fwd rate, now spot moved)
+    const hPnl = hedged * mv;
+    // Net: unhedged portion P&L + hedged portion P&L
+    const unhedgedPortion = exp * (1 - ratio);
+    const net = (unhedgedPortion * mv) + hPnl - hedged * (fwd/sp - 1);
     return `<tr><td class="${mv>0?'up':mv<0?'dn':'neu'}">${mv>0?'+':''}${(mv*100).toFixed(0)}%</td><td class="${fc(uPnl)}">${uPnl>0?'+':''}$${Math.round(uPnl).toLocaleString()}</td><td class="${fc(hPnl)}">${hPnl>0?'+':''}$${Math.round(hPnl).toLocaleString()}</td><td class="${fc(ben)}">${ben>0?'+':''}$${Math.round(ben).toLocaleString()}</td></tr>`;
   }).join('');
 
@@ -904,62 +918,49 @@ function calcH() {
 // MACRO — sourced from real scheduled events, no invented numbers
 // ═══════════════════════════════════════════════
 function buildMacro() {
-  // CB Rates — FRED API live
-  const cbSeries = [
+  // ── CB Rates via FRED proxy ───────────────────────────────────────────
+  const cbIds = [
     {id:'DFEDTARU', label:'Fed (upper bound)',  sfx:'%', next:'Jun 17 2026', imp:'↔ USD neutral'},
     {id:'ECBDFR',   label:'ECB (deposit rate)', sfx:'%', next:'Jun 12 2026', imp:'↑ EUR/USD'},
     {id:'RBAAOARD', label:'RBA',                sfx:'%', next:'Jul 1 2026',  imp:'↔ AUD stable'},
   ];
-  Promise.all(cbSeries.map(s =>
-    fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${s.id}`,{signal:AbortSignal.timeout(15000)})
-      .then(r=>r.text()).then(txt=>{
-        const lines=txt.trim().split('\n').filter(l=>!l.startsWith('DATE')&&l.trim());
-        const val=parseFloat(lines[lines.length-1]?.split(',')[1]);
-        const date=lines[lines.length-1]?.split(',')[0]||'';
-        return {...s, rate:isNaN(val)?'—':val.toFixed(2)+s.sfx, date};
-      }).catch(()=>({...s,rate:'—',date:''}))
-  )).then(rows=>{
+  Promise.all(cbIds.map(s =>
+    fetch('https://base-metals-terminal.vercel.app/api/quote?fred='+s.id, {signal:AbortSignal.timeout(15000)})
+      .then(r=>r.json())
+      .then(d=>({...s, rate: d.value!=null ? d.value.toFixed(2)+s.sfx : '—', date: d.date||''}))
+      .catch(()=>({...s, rate:'—', date:''}))
+  )).then(rows => {
     fetch('https://base-metals-terminal.vercel.app/api/quote?pboc=true',{signal:AbortSignal.timeout(8000)})
-      .then(r=>r.json()).then(d=>{
-        rows.push({label:'PBOC (1Y LPR)',rate:d.pboc?d.pboc+'%':'3.00%',next:'May 20 2026',imp:'↑ China stim',date:'live'});
-      }).catch(()=>{rows.push({label:'PBOC (1Y LPR)',rate:'3.00%',next:'—',imp:'↑ China stim',date:'cached'});})
+      .then(r=>r.json()).then(d=>{rows.push({label:'PBOC (1Y LPR)',rate:d.pboc?d.pboc+'%':'—',next:'Jun 20 2026',imp:'↑ China stim',date:''});})
+      .catch(()=>rows.push({label:'PBOC (1Y LPR)',rate:'—',next:'Jun 20 2026',imp:'↑ China stim',date:''}))
       .finally(()=>{
         const el=document.getElementById('cb-tbl'); if(!el) return;
         el.innerHTML=rows.map(r=>`<tr>
           <td class="hl">${r.label}</td><td class="am">${r.rate}</td>
-          <td class="neu">${r.next}</td>
-          <td style="font-size:9px;color:#8a9ab0">FRED${r.date?' '+r.date:''}</td>
+          <td class="neu">${r.next}</td><td style="font-size:9px;color:#8a9ab0">FRED${r.date?' · '+r.date:''}</td>
           <td class="${r.imp.includes('↑')?'up':'neu'}">${r.imp}</td>
         </tr>`).join('');
       });
   });
 
-  // Macro indicators — FRED
-  const fredS = [
-    {id:'INDPRO',   label:'US Industrial Production', t:'yoy', u:'%', imp:'↑ Bullish metals'},
-    {id:'CPIAUCSL', label:'US CPI YoY',               t:'yoy', u:'%', imp:'↑ Softer = weaker USD'},
-    {id:'UNRATE',   label:'US Unemployment',          t:'last',u:'%', imp:'↔ Employment'},
-    {id:'DTWEXBGS', label:'USD Broad Index',           t:'last',u:'',  imp:'↑ USD weaker = metals +'},
-    {id:'T10Y2Y',   label:'2s10s Spread',             t:'last',u:'%', imp:'↔ Yield curve'},
-    {id:'FEDFUNDS', label:'Effective Fed Funds',      t:'last',u:'%', imp:'↔ Rates'},
-    {id:'CHNPMICN', label:'China Mfg PMI',            t:'last',u:'',  imp:'↑ >50 = metals demand'},
+  // ── Macro indicators via FRED proxy ──────────────────────────────────
+  const fredIds = [
+    {id:'INDPRO',   label:'US Industrial Production', imp:'↑ Bullish metals', yoy:true},
+    {id:'CPIAUCSL', label:'US CPI YoY',               imp:'↑ Softer = weaker USD', yoy:true},
+    {id:'UNRATE',   label:'US Unemployment',          imp:'↔ Employment signal', yoy:false},
+    {id:'DTWEXBGS', label:'USD Broad Index',           imp:'↑ USD weaker = metals +', yoy:false},
+    {id:'T10Y2Y',   label:'2s10s Spread',             imp:'↔ Yield curve signal', yoy:false},
+    {id:'FEDFUNDS', label:'Effective Fed Funds',      imp:'↔ Rates impact', yoy:false},
+    {id:'CHNPMICN', label:'China Mfg PMI',            imp:'↑ >50 = metals demand', yoy:false},
   ];
   const macEl=document.getElementById('mac-tbl');
-  if(macEl) macEl.innerHTML='<tr><td colspan="4" style="color:#8a9ab0"><span class="sp2"></span>Fetching FRED…</td></tr>';
-  Promise.all(fredS.map(s=>
-    fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${s.id}`,{signal:AbortSignal.timeout(10000)})
-      .then(r=>r.text()).then(txt=>{
-        const lines=txt.trim().split('\n').filter(l=>!l.startsWith('DATE')&&l.trim());
-        const lv=parseFloat(lines[lines.length-1]?.split(',')[1]);
-        const pv=parseFloat(lines[lines.length-2]?.split(',')[1]);
-        const ld=lines[lines.length-1]?.split(',')[0]||'—';
-        let val=isNaN(lv)?'—':lv.toFixed(2)+s.u, prev=isNaN(pv)?'—':pv.toFixed(2)+s.u;
-        if(s.t==='yoy'&&lines.length>13){
-          const yv=parseFloat(lines[lines.length-13]?.split(',')[1]);
-          if(yv>0){val=((lv/yv-1)*100).toFixed(2)+'%';prev=((pv/yv-1)*100).toFixed(2)+'%';}
-        }
-        return [s.label,val,prev,s.imp,ld];
-      }).catch(()=>[s.label,'—','—',s.imp,'—'])
+  if(macEl) macEl.innerHTML='<tr><td colspan="4" style="color:#8a9ab0"><span class="sp2"></span>Fetching FRED data…</td></tr>';
+
+  Promise.all(fredIds.map(s=>
+    fetch('https://base-metals-terminal.vercel.app/api/quote?fred='+s.id+'&yoy='+(s.yoy?'1':'0'), {signal:AbortSignal.timeout(15000)})
+      .then(r=>r.json())
+      .then(d=>([s.label, d.value!=null?d.value.toFixed(2)+(s.yoy?'%':''):'—', d.prev!=null?d.prev.toFixed(2)+(s.yoy?'%':''):'—', s.imp, d.date||'—']))
+      .catch(()=>([s.label,'—','—',s.imp,'—']))
   )).then(rows=>{
     if(!macEl) return;
     macEl.innerHTML=rows.map(([lb,v,p,imp,d])=>{
@@ -989,10 +990,65 @@ function buildMacro() {
 // ═══════════════════════════════════════════════
 // NEWS — editorial, updated contextually
 // ═══════════════════════════════════════════════
+async function buildNews() {
+  // Fetch live news via proxy
+  try {
+    const r = await fetch('https://base-metals-terminal.vercel.app/api/quote?news=true',{signal:AbortSignal.timeout(15000)});
+    const d = await r.json(); const items = d.news||[];
+    const nfEl = document.getElementById('nf');
+    if(nfEl && items.length>0) {
+      nfEl.innerHTML = items.map(n=>{
+        const age=n.date?Math.round((Date.now()-new Date(n.date))/60000):999;
+        const ageStr=age<60?age+'m ago':Math.round(age/60)+'h ago';
+        return`<div class="nit">
+          <div style="display:flex;justify-content:space-between">
+            <span class="nt2">${ageStr} · ${n.src}</span>
+            ${age<180?'<span class="bg bga">NEW</span>':''}
+          </div>
+          <div class="nh"><a href="${n.link}" target="_blank" style="color:var(--text);text-decoration:none">${n.title}</a></div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {
+    const nfEl=document.getElementById('nf');
+    if(nfEl) nfEl.innerHTML='<div style="color:#8a9ab0;font-size:11px">News temporarily unavailable</div>';
+  }
+  // Polymarket
+  try {
+    const r=await fetch('https://gamma-api.polymarket.com/markets?active=true&limit=30&order=volume24hr&ascending=false',{signal:AbortSignal.timeout(10000)});
+    const markets=await r.json(); if(!markets?.length) throw new Error('');
+    const kw=['fed','rate','copper','metal','china','inflation','recession','tariff','trade','dollar','gold','gdp','iran','oil','pboc','ecb','fomc','rba'];
+    const rel=markets.filter(m=>kw.some(k=>(m.question||'').toLowerCase().includes(k)));
+    const display=rel.length>2?rel.slice(0,10):markets.slice(0,10);
+    const polyEl=document.getElementById('poly-feed');
+    if(polyEl) polyEl.innerHTML=display.map(m=>{
+      const prob=m.outcomePrices?JSON.parse(m.outcomePrices)[0]:null;
+      const pct=prob?Math.round(parseFloat(prob)*100):null;
+      const vol=m.volume24hr?'$'+(parseFloat(m.volume24hr)/1000).toFixed(0)+'k vol':'';
+      const cls=pct>60?'up':pct<40?'dn':'am';
+      return`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          ${pct!==null?`<span class="${cls}" style="font-size:14px;font-weight:600">${pct}%</span>`:'<span class="neu">—</span>'}
+          <span style="font-size:9px;color:#8a9ab0">${vol}</span>
+        </div>
+        <div style="font-size:11px;line-height:1.3">${m.question}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
 
 // ═══════════════════════════════════════════════
 // NAV
 // ═══════════════════════════════════════════════
+function _doShowPage(id) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('act'));
+  document.querySelectorAll('.nv').forEach(n => n.classList.remove('act'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('act');
+  const nv = document.getElementById('nv-' + id);
+  if (nv) nv.classList.add('act');
+  refPage(id);
+}
 
 // ═══════════════════════════════════════════════
 // INIT
@@ -1007,10 +1063,95 @@ window.addEventListener('resize', () => {
 
 // ═══ TERM STRUCTURE ═══
 const TY=[0,1/52,1/12,2/12,3/12,6/12,9/12,1,1.5,2,3];
+let tsVis={Cu:true,Al:true,Ni:true,Zn:false,Pb:false,Sn:false};
+function toggleTs(k,btn){tsVis[k]=!tsVis[k];btn.classList.toggle('act',tsVis[k]);drawTS();}
 
+function buildTS(){
+  document.getElementById('ts-stamp').textContent=lastFetch?lastFetch.toUTCString().split(' ')[4]+' UTC':'—';
+  let html='';
+  Object.entries(METALS).forEach(([k,m])=>{
+    const sp=metalPrice(k); if(!sp){html+=`<tr><td style="color:${m.col}">● ${k}</td><td colspan="9" class="neu">—</td></tr>`;return;}
+    const t=TERM[k];
+    const ct=(t[4]-1)*100, struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
+    const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
+    html+=`<tr><td><span style="color:${m.col}">●</span> ${k} – ${m.name}</td>
+      <td class="hl">$${f0(sp)}</td><td>$${f0(sp*t[2])}</td><td>$${f0(sp*t[4])}</td>
+      <td>$${f0(sp*t[5])}</td><td>$${f0(sp*t[7])}</td><td>$${f0(sp*t[9])}</td>
+      <td><span class="sg ${sc}">${struct}</span></td>
+      <td class="${ct>0?'up':'dn'}">${ct>0?'+':''}$${f0(sp*(t[4]-1))}</td>
+      <td class="${ct>0?'up':'dn'}">${ct>0?'+':''}${(ct*4).toFixed(2)}%</td></tr>`;
+  });
+  document.getElementById('ts-tbl').innerHTML=html;
+  let sigs='';
+  Object.entries(METALS).forEach(([k,m])=>{
+    const t=TERM[k],ct=(t[4]-1)*100;
+    const struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
+    const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
+    sigs+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="color:${m.col};font-weight:600">${k}</span>
+      <span class="sg ${sc}">${struct}</span>
+      <div style="text-align:right;font-size:10px;color:var(--text2)">3M: ${ct>0?'+':''}${ct.toFixed(3)}%<br>
+      <span style="font-size:9px;color:#8a9ab0">${ct>0?'Storage cost > conv. yield':'Shortage / high spot demand'}</span></div>
+    </div>`;
+  });
+  document.getElementById('ts-signals').innerHTML=sigs;
+  drawTS();
+}
 
+function drawTS(){
+  const mode=document.getElementById('ts-mode')?.value||'price';
+  const cv=document.getElementById('ts-cv'); if(!cv) return;
+  const W=cv.offsetWidth||600,H=240; cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,W,H);
+  const lines=[];const allVals=[];
+  Object.entries(METALS).forEach(([k,m])=>{
+    if(!tsVis[k]) return;
+    const sp=metalPrice(k); if(!sp) return;
+    const prices=TERM[k].map(t=>sp*t);
+    let vals=prices;
+    if(mode==='basis') vals=prices.map(p=>p-prices[0]);
+    if(mode==='ann') vals=prices.map((p,i)=>i===0?0:((p/prices[0])**(1/Math.max(TY[i],.001))-1)*100);
+    allVals.push(...vals); lines.push({k,col:m.col,name:m.name,vals});
+  });
+  if(!lines.length) return;
+  const mn=Math.min(...allVals),mx=Math.max(...allVals);
+  const pad={t:20,b:12,l:56,r:20};
+  const W2=W-pad.l-pad.r,H2=H-pad.t-pad.b;
+  const toX=i=>pad.l+i*W2/(TY.length-1), toY=v=>pad.t+H2-(v-mn)/(mx-mn+.001)*H2;
+  ctx.strokeStyle='rgba(180,200,220,.4)';ctx.lineWidth=.5;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const v=mn+(1-t)*(mx-mn),y=toY(v);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='#8a9ab0';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';
+    ctx.fillText(mode==='price'?'$'+(v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0)):v.toFixed(2)+(mode==='ann'?'%':''),pad.l-3,y+3);
+  });
+  if(mode!=='price'){ctx.strokeStyle='rgba(100,128,144,.4)';ctx.lineWidth=.8;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pad.l,toY(0));ctx.lineTo(W-pad.r,toY(0));ctx.stroke();ctx.setLineDash([]);}
+  lines.forEach(line=>{
+    ctx.beginPath();line.vals.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+    ctx.strokeStyle=line.col;ctx.lineWidth=2;ctx.stroke();
+    line.vals.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),3,0,Math.PI*2);ctx.fillStyle=line.col;ctx.fill();});
+    ctx.fillStyle=line.col;ctx.font='10px IBM Plex Mono';ctx.textAlign='left';
+    ctx.fillText(line.k,toX(TY.length-1)+4,toY(line.vals[TY.length-1])+3);
+  });
+}
 
 // ═══ COT CFTC ═══
+async function buildCOT(){
+  try{
+    const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?cot=true',{signal:AbortSignal.timeout(12000)});
+    const d=await r.json(); const rows=d.cot||[];
+    if(!rows.length) throw new Error('No data');
+    document.getElementById('cot-stamp').textContent='CFTC — '+(rows[0]?.date||'—');
+    document.getElementById('cot-tbl').innerHTML=rows.map(r2=>`<tr>
+      <td><span style="color:${r2.col}">●</span> ${r2.name}</td>
+      <td class="up">${(r2.longL/1000).toFixed(1)}k</td>
+      <td class="dn">${(r2.shortL/1000).toFixed(1)}k</td>
+      <td class="${r2.net>0?'up':'dn'}">${r2.net>0?'+':''}${(r2.net/1000).toFixed(1)}k</td>
+      <td class="${r2.chg>0?'up':'dn'}">${r2.chg>0?'+':''}${(r2.chg/1000).toFixed(1)}k</td>
+      <td><span class="sg ${r2.net>0?'slo':'ssh'}">${r2.net>0?'NET LONG':'NET SHORT'}</span></td>
+    </tr>`).join('');
+  }catch(e){document.getElementById('cot-tbl').innerHTML=`<tr><td colspan="6" class="neu">CFTC unavailable: ${e.message}</td></tr>`;}
+}
 
 // ═══ NEWS via Vercel proxy ═══
 async function buildNewsLive(){
@@ -1062,56 +1203,86 @@ const _buildNewsOrig = buildNews;
 buildNews = async function(){ _buildNewsOrig(); await buildNewsLive(); buildPolymarket(); };
 
 
-// ═══ HISTORICAL CHART — shared function ═══
-var hpCache={};
+// Historical chart for Spot & Futures page
+var hp2Period = '1y';
+var _hp2Cache = {};
 
-function _drawHistChart(cvId, msgId, statId, btnClass, sym, period, cache_key, pts) {
-  const msgEl=document.getElementById(msgId), cvEl=document.getElementById(cvId), stEl=document.getElementById(statId);
+function hp2Set(p, btn) {
+  hp2Period = p;
+  const btns = document.querySelectorAll('#page-spot .perf-btn');
+  btns.forEach(b => b.classList.remove('act'));
+  if(btn) btn.classList.add('act');
+  hp2Load();
+}
+
+async function hp2Load() {
+  const selEl = document.getElementById('hp2-sym'); if(!selEl) return;
+  const sym = selEl.value;
+  const rng = {'5d':'5d','1mo':'1mo','3mo':'3mo','6mo':'6mo','1y':'1y','3y':'3y','5y':'5y','max':'max'}[hp2Period]||'1y';
+  const itv = {'5d':'1h','1mo':'1d','3mo':'1d','6mo':'1wk','1y':'1wk','3y':'1mo','5y':'1mo','max':'1mo'}[hp2Period]||'1wk';
+  const key = sym+'_'+rng;
+  const msgEl=document.getElementById('hp2-msg'), cvEl=document.getElementById('hp2-cv');
   if(!msgEl||!cvEl) return;
-  if(!pts||pts.length<2){msgEl.style.display='block';msgEl.innerHTML='<span style="color:#8a9ab0">No data</span>';cvEl.style.display='none';return;}
+  msgEl.style.display='block'; msgEl.innerHTML='<span class="sp2"></span>Loading…'; cvEl.style.display='none';
+  let pts = _hp2Cache[key];
+  if(!pts) {
+    try {
+      const r = await fetch(`https://base-metals-terminal.vercel.app/api/quote?symbols=${encodeURIComponent(sym)}&history=true&range=${rng}&interval=${itv}`,{signal:AbortSignal.timeout(20000)});
+      const d = await r.json(); pts = d.history||[];
+      if(pts.length>2) _hp2Cache[key]=pts;
+    } catch(e) { msgEl.innerHTML='<span style="color:#c62828">Unavailable</span>'; return; }
+  }
+  if(!pts||pts.length<2){msgEl.innerHTML='<span style="color:#8a9ab0">No data</span>';return;}
+  _drawHistCanvas('hp2-cv','hp2-msg','hp2-stat', pts, hp2Period);
+}
+
+function _drawHistCanvas(cvId, msgId, statId, pts, period) {
+  const msgEl=document.getElementById(msgId), cvEl=document.getElementById(cvId), stEl=document.getElementById(statId);
+  if(!cvEl) return;
   msgEl.style.display='none'; cvEl.style.display='block';
-  const W=cvEl.offsetWidth||560,H=cvEl.height||190; cvEl.width=W; cvEl.height=H;
+  const W=cvEl.offsetWidth||560, H=parseInt(cvEl.getAttribute('height'))||190;
+  cvEl.width=W; cvEl.height=H;
   const ctx=cvEl.getContext('2d'); ctx.clearRect(0,0,W,H);
   const cls=pts.map(p=>p.c), tms=pts.map(p=>p.t);
-  const mn=Math.min(...cls),mx=Math.max(...cls);
+  const mn=Math.min(...cls), mx=Math.max(...cls);
   const pl={t:14,b:12,l:58,r:14};
-  const W2=W-pl.l-pl.r,H2=H-pl.t-pl.b;
+  const W2=W-pl.l-pl.r, H2=H-pl.t-pl.b;
   const toX=i=>pl.l+i*W2/(pts.length-1), toY=v=>pl.t+H2-(v-mn)/(mx-mn+.001)*H2;
   // Grid
   ctx.strokeStyle='rgba(180,200,220,.3)'; ctx.lineWidth=.5;
   [0,.25,.5,.75,1].forEach(t=>{
-    const v=mn+(1-t)*(mx-mn),y=toY(v);
+    const v=mn+(1-t)*(mx-mn), y=toY(v);
     ctx.beginPath();ctx.moveTo(pl.l,y);ctx.lineTo(W-pl.r,y);ctx.stroke();
-    ctx.fillStyle='#8a9ab0';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';
+    ctx.fillStyle='#8a9ab0'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='right';
     const lb=v>=10000?'$'+(v/1000).toFixed(0)+'k':v>=1000?'$'+(v/1000).toFixed(1)+'k':v<2?v.toFixed(4):'$'+Math.round(v).toLocaleString();
-    ctx.fillText(lb,pl.l-3,y+3);
+    ctx.fillText(lb, pl.l-3, y+3);
   });
-  const isUp=cls[cls.length-1]>=cls[0];
+  const isUp = cls[cls.length-1] >= cls[0];
   const grad=ctx.createLinearGradient(0,pl.t,0,H-pl.b);
   grad.addColorStop(0,isUp?'rgba(27,94,32,.18)':'rgba(198,40,40,.15)');
   grad.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.beginPath();cls.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
-  ctx.lineTo(toX(cls.length-1),H-pl.b);ctx.lineTo(toX(0),H-pl.b);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
-  ctx.beginPath();cls.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
-  ctx.strokeStyle=isUp?'#1b5e20':'#c62828';ctx.lineWidth=1.8;ctx.stroke();
+  ctx.beginPath(); cls.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+  ctx.lineTo(toX(cls.length-1),H-pl.b); ctx.lineTo(toX(0),H-pl.b); ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath(); cls.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+  ctx.strokeStyle=isUp?'#1b5e20':'#c62828'; ctx.lineWidth=1.8; ctx.stroke();
   const pct=((cls[cls.length-1]/cls[0]-1)*100).toFixed(2);
   if(stEl) stEl.innerHTML=`<span style="color:${isUp?'#1b5e20':'#c62828'}">${isUp?'+':''}${pct}%</span> <span style="color:#8a9ab0;font-size:9px">${period.toUpperCase()}</span>`;
   // X labels
-  const lc=Math.min(6,pts.length),ls=Math.floor(pts.length/lc);
-  ctx.fillStyle='#8a9ab0';ctx.font='9px IBM Plex Mono';ctx.textAlign='center';
+  const lc=Math.min(6,pts.length), ls=Math.floor(pts.length/lc);
+  ctx.fillStyle='#8a9ab0'; ctx.font='9px IBM Plex Mono'; ctx.textAlign='center';
   for(let i=0;i<pts.length;i+=ls){
     const d2=new Date(tms[i]);
     const lb2=period==='5d'?d2.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):
-      period==='1mo'||period==='3mo'?d2.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):
       period==='max'||period==='5y'||period==='3y'?String(d2.getFullYear()):
       d2.toLocaleDateString('en-GB',{month:'short',year:'2-digit'});
-    ctx.fillText(lb2,toX(i),H-1);
+    ctx.fillText(lb2, toX(i), H-1);
   }
   // Hover
   cvEl.onmousemove=function(e){
     const rect=cvEl.getBoundingClientRect(),mx2=e.clientX-rect.left-pl.l;
     const idx=Math.max(0,Math.min(pts.length-1,Math.round(mx2/W2*(pts.length-1))));
-    const v=cls[idx],t2=new Date(tms[idx]);
+    const v=cls[idx], t2=new Date(tms[idx]);
     const ds=t2.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
     if(stEl) stEl.innerHTML=`<span style="color:${isUp?'#1b5e20':'#c62828'}">${v>=1000?'$'+f0(v):v.toFixed(4)}</span> <span style="color:#8a9ab0;font-size:9px">${ds}</span>`;
   };
@@ -1120,190 +1291,10 @@ function _drawHistChart(cvId, msgId, statId, btnClass, sym, period, cache_key, p
   };
 }
 
-async function _loadHistGeneric(symId,periodId,msgId,cvId,statId,btnClass){
-  const selEl=document.getElementById(symId); if(!selEl) return;
-  const sym=selEl.value;
-  const period=window[periodId]||'1y';
-  const rng={'5d':'5d','1mo':'1mo','3mo':'3mo','6mo':'6mo','1y':'1y','3y':'3y','5y':'5y','max':'max'}[period]||'1y';
-  const itv={'5d':'1h','1mo':'1d','3mo':'1d','6mo':'1wk','1y':'1wk','3y':'1mo','5y':'1mo','max':'1mo'}[period]||'1wk';
-  const key=sym+'_'+rng;
-  const msgEl=document.getElementById(msgId),cvEl=document.getElementById(cvId);
-  if(msgEl){msgEl.style.display='block';msgEl.innerHTML='<span class="sp2"></span>Loading…';}
-  if(cvEl) cvEl.style.display='none';
-  let pts=hpCache[key];
-  if(!pts){
-    try{
-      const r=await fetch(`https://base-metals-terminal.vercel.app/api/quote?symbols=${encodeURIComponent(sym)}&history=true&range=${rng}&interval=${itv}`,{signal:AbortSignal.timeout(20000)});
-      const d=await r.json(); pts=d.history||[];
-      if(pts.length>2) hpCache[key]=pts;
-    }catch(e){if(msgEl){msgEl.style.display='block';msgEl.innerHTML='<span style="color:#c62828">Unavailable</span>';}return;}
-  }
-  _drawHistChart(cvId,msgId,statId,btnClass,sym,period,key,pts);
-}
-
-// ── Overview chart (hp-sym, hp-cv) ──
-var hpPeriod='1y';
-function setHP(p,btn){hpPeriod=p;document.querySelectorAll('.perf-btn').forEach(b=>b.classList.remove('act'));if(btn)btn.classList.add('act');loadHist();}
-function loadHist(){window.hpPeriod=hpPeriod;_loadHistGeneric('hp-sym','hpPeriod','hp-msg','hp-cv','hp-stat','perf-btn');}
-
-// ── Spot & Futures chart (hp2-sym, hp2-cv) ──
-var hp2Period='1y';
-function setHP2(p,btn){hp2Period=p;document.querySelectorAll('#page-spot .perf-btn').forEach(b=>b.classList.remove('act'));if(btn)btn.classList.add('act');loadHist2();}
-function loadHist2(){window.hp2Period=hp2Period;_loadHistGeneric('hp2-sym','hp2Period','hp2-msg','hp2-cv','hp2-stat','perf-btn2');}
-
-// ═══ TERM STRUCTURE ═══
-var tsVis={Cu:true,Al:true,Ni:true,Zn:false,Pb:false,Sn:false};
-function toggleTs(k,btn){tsVis[k]=!tsVis[k];btn.classList.toggle('act',tsVis[k]);drawTS();}
-function buildTS(){
-  const st=document.getElementById('ts-stamp');
-  if(st) st.textContent=lastFetch?lastFetch.toUTCString().split(' ')[4]+' UTC':'—';
-  let html='';
-  Object.entries(METALS).forEach(([k,m])=>{
-    const sp=metalPrice(k);
-    if(!sp){html+=`<tr><td style="color:${m.col}">● ${k}</td><td colspan="9" class="neu">—</td></tr>`;return;}
-    const t=TERM[k],ct=(t[4]-1)*100;
-    const struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
-    const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
-    html+=`<tr>
-      <td><span style="color:${m.col}">●</span> ${k} – ${m.name}</td>
-      <td class="hl">$${f0(sp)}</td>
-      <td>$${f0(sp*t[2])}</td><td>$${f0(sp*t[4])}</td><td>$${f0(sp*t[5])}</td>
-      <td>$${f0(sp*t[7])}</td><td>$${f0(sp*t[9])}</td>
-      <td><span class="sg ${sc}">${struct}</span></td>
-      <td class="${ct>0?'up':'dn'}">${ct>0?'+':''}$${f0(sp*(t[4]-1))}</td>
-      <td class="${ct>0?'up':'dn'}">${(ct*4).toFixed(2)}%</td>
-    </tr>`;
-  });
-  const tbl=document.getElementById('ts-tbl');if(tbl)tbl.innerHTML=html;
-  let sigs='';
-  Object.entries(METALS).forEach(([k,m])=>{
-    const t=TERM[k],ct=(t[4]-1)*100;
-    const struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
-    const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
-    sigs+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-      <span style="color:${m.col};font-weight:600">${k}</span>
-      <span class="sg ${sc}">${struct}</span>
-      <div style="text-align:right;font-size:10px;color:var(--text2)">3M: ${ct>0?'+':''}${ct.toFixed(3)}%<br>
-      <span style="font-size:9px;color:#8a9ab0">${ct>0?'Storage cost > conv. yield':'Shortage / high spot demand'}</span></div>
-    </div>`;
-  });
-  const sigEl=document.getElementById('ts-signals');if(sigEl)sigEl.innerHTML=sigs;
-  drawTS();
-}
-function drawTS(){
-  const mode=document.getElementById('ts-mode')?.value||'price';
-  const cv=document.getElementById('ts-cv');if(!cv)return;
-  const W=cv.offsetWidth||600,H=240;cv.width=W;cv.height=H;
-  const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);
-  const lines=[],allV=[];
-  Object.entries(METALS).forEach(([k,m])=>{
-    if(!tsVis[k])return;
-    const sp=metalPrice(k);if(!sp)return;
-    const prices=TERM[k].map(t=>sp*t);
-    let vals=prices;
-    if(mode==='basis')vals=prices.map(p=>p-prices[0]);
-    if(mode==='ann')vals=prices.map((p,i)=>i===0?0:((p/prices[0])**(1/Math.max(TYts[i],.001))-1)*100);
-    allV.push(...vals);lines.push({k,col:m.col,vals});
-  });
-  if(!lines.length)return;
-  const mn=Math.min(...allV),mx=Math.max(...allV);
-  const pad={t:18,b:10,l:54,r:22};
-  const W2=W-pad.l-pad.r,H2=H-pad.t-pad.b;
-  const toX=i=>pad.l+i*W2/(TYts.length-1),toY=v=>pad.t+H2-(v-mn)/(mx-mn+.001)*H2;
-  ctx.strokeStyle='rgba(180,200,220,.35)';ctx.lineWidth=.5;
-  [0,.25,.5,.75,1].forEach(t=>{
-    const v=mn+(1-t)*(mx-mn),y=toY(v);
-    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
-    ctx.fillStyle='#8a9ab0';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';
-    ctx.fillText(mode==='price'?'$'+(v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0)):v.toFixed(2)+(mode==='ann'?'%':''),pad.l-3,y+3);
-  });
-  if(mode!=='price'){ctx.strokeStyle='rgba(100,130,160,.35)';ctx.lineWidth=.8;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pad.l,toY(0));ctx.lineTo(W-pad.r,toY(0));ctx.stroke();ctx.setLineDash([]);}
-  lines.forEach(line=>{
-    ctx.beginPath();line.vals.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
-    ctx.strokeStyle=line.col;ctx.lineWidth=2;ctx.stroke();
-    line.vals.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),3,0,Math.PI*2);ctx.fillStyle=line.col;ctx.fill();});
-    ctx.fillStyle=line.col;ctx.font='10px IBM Plex Mono';ctx.textAlign='left';
-    ctx.fillText(line.k,toX(TYts.length-1)+4,toY(line.vals[TYts.length-1])+3);
-  });
-}
-
-// ═══ COT CFTC ═══
-async function buildCOT(){
-  const cotEl=document.getElementById('cot-tbl');
-  const stEl=document.getElementById('cot-stamp');
-  try{
-    const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?cot=true',{signal:AbortSignal.timeout(25000)});
-    const d=await r.json();const rows=d.cot||[];
-    if(!rows.length)throw new Error('No data');
-    if(stEl)stEl.textContent='CFTC — '+(rows[0]?.date||'—');
-    if(cotEl)cotEl.innerHTML=rows.map(r2=>`<tr>
-      <td><span style="color:${r2.col}">●</span> ${r2.name}</td>
-      <td class="up">${(r2.longL/1000).toFixed(1)}k</td>
-      <td class="dn">${(r2.shortL/1000).toFixed(1)}k</td>
-      <td class="${r2.net>0?'up':'dn'}">${r2.net>0?'+':''}${(r2.net/1000).toFixed(1)}k</td>
-      <td class="${r2.chg>0?'up':'dn'}">${r2.chg>0?'+':''}${(r2.chg/1000).toFixed(1)}k</td>
-      <td><span class="sg ${r2.net>0?'slo':'ssh'}">${r2.net>0?'NET LONG':'NET SHORT'}</span></td>
-    </tr>`).join('');
-  }catch(e){if(cotEl)cotEl.innerHTML=`<tr><td colspan="6" class="neu">CFTC unavailable: ${e.message}</td></tr>`;}
-}
-
-// ═══ NEWS + POLYMARKET ═══
-async function buildNews(){
-  try{
-    const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?news=true',{signal:AbortSignal.timeout(15000)});
-    const d=await r.json();const items=d.news||[];
-    const nfEl=document.getElementById('nf');
-    if(nfEl&&items.length>0){
-      nfEl.innerHTML=items.map(n=>{
-        const age=n.date?Math.round((Date.now()-new Date(n.date))/60000):999;
-        const ageStr=age<60?age+'m ago':Math.round(age/60)+'h ago';
-        return`<div class="nit"><div style="display:flex;justify-content:space-between"><span class="nt2">${ageStr} · ${n.src}</span>${age<180?'<span class="bg bga">NEW</span>':''}</div>
-          <div class="nh"><a href="${n.link}" target="_blank" style="color:var(--text);text-decoration:none">${n.title}</a></div></div>`;
-      }).join('');
-    }
-  }catch(e){/* keep static fallback */}
-  // Polymarket — broader keyword filter
-  try{
-    const r=await fetch('https://gamma-api.polymarket.com/markets?active=true&limit=30&order=volume24hr&ascending=false',{signal:AbortSignal.timeout(10000)});
-    const markets=await r.json();if(!markets?.length)throw new Error('');
-    const kw=['fed','rate','copper','metal','china','inflation','recession','tariff','trade','dollar','gold','gdp','oil','pboc','ecb','fomc','boe','rba'];
-    const rel=markets.filter(m=>kw.some(k=>(m.question||'').toLowerCase().includes(k))).slice(0,10);
-    const display=rel.length>3?rel:markets.slice(0,8);
-    const polyEl=document.getElementById('poly-feed');
-    if(polyEl)polyEl.innerHTML=display.map(m=>{
-      const prob=m.outcomePrices?JSON.parse(m.outcomePrices)[0]:null;
-      const pct=prob?Math.round(parseFloat(prob)*100):null;
-      const vol=m.volume24hr?'$'+(parseFloat(m.volume24hr)/1000).toFixed(0)+'k vol':'';
-      const cls=pct>60?'up':pct<40?'dn':'am';
-      return`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-          ${pct!==null?`<span class="${cls}" style="font-size:14px;font-weight:600">${pct}%</span>`:'<span class="neu">—</span>'}
-          <span style="font-size:9px;color:#8a9ab0">${vol}</span>
-        </div>
-        <div style="font-size:11px;color:var(--text);line-height:1.3">${m.question}</div>
-      </div>`;
-    }).join('');
-  }catch(e){const polyEl=document.getElementById('poly-feed');if(polyEl)polyEl.innerHTML='<div style="color:#8a9ab0">Polymarket unavailable</div>';}
-}
-
-}); // end DOMContentLoaded
-
-// FX group filter
-var fxGroup = 'all';
-function setFxGroup(g, btn) {
-  fxGroup = g;
-  document.querySelectorAll('[id^="fx-grp-"]').forEach(b => b.classList.remove('act'));
-  if(btn) btn.classList.add('act');
-  buildFX();
-}
-
-// Fix period buttons for hp chart (Overview)
-document.querySelectorAll('#page-ov .perf-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('#page-ov .perf-btn').forEach(b => b.classList.remove('act'));
-    this.classList.add('act');
-  });
-});
+// Signal readiness + flush pending showPage call
+window._spReady = true;
+window._doShowPage = _doShowPage;
+if(window._spPending) { _doShowPage(window._spPending); window._spPending=null; }
 
 </script>
   <div style="background:#fff;border-top:1px solid #dde8f2;padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
