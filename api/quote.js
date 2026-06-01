@@ -100,41 +100,6 @@ async function fetchHistory(sym, range, interval) {
   return [];
 }
 
-
-// ─── LME Monthly Forwards (free, 15min delay from lme.com) ───────────────────
-async function fetchLMEForwards(metalSlug) {
-  // metalSlug: 'lme-copper', 'lme-aluminium', 'lme-nickel', 'lme-zinc', 'lme-lead', 'lme-tin'
-  try {
-    const url = `https://www.lme.com/en/metals/non-ferrous/${metalSlug}`;
-    const r = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
-      signal: AbortSignal.timeout(10000)
-    });
-    const html = await r.text();
-    // LME page has forward prices in JSON-LD or inline data
-    // Try to extract from script tags with price data
-    const priceRe = /"price"\s*:\s*"?([\d.]+)"?/g;
-    const dateRe  = /"validFrom"\s*:\s*"([^"]+)"/g;
-    const prices = [], dates = [];
-    let m;
-    while ((m = priceRe.exec(html)) !== null) { const v = parseFloat(m[1]); if (v > 100 && v < 200000) prices.push(v); }
-    while ((m = dateRe.exec(html)) !== null) dates.push(m[1]);
-    if (prices.length > 0) return { prices: prices.slice(0, 6), dates: dates.slice(0, 6) };
-
-    // Fallback: parse table data
-    const tableRe = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[\s-]+\d{2,4}[^\d]+(\d{1,3},?\d{3}\.\d{1,2})/g;
-    const fwds = [];
-    while ((m = tableRe.exec(html)) !== null) {
-      fwds.push({ label: m[1], price: parseFloat(m[2].replace(/,/g, '')) });
-    }
-    if (fwds.length > 0) return { forwards: fwds.slice(0, 6) };
-    return null;
-  } catch(e) {
-    console.error('LME forwards error:', e.message);
-    return null;
-  }
-}
-
 // ─── COT CFTC ────────────────────────────────────────────────────────────────
 // Uses CFTC publicreporting Socrata API with correct field names
 async function fetchCOT() {
@@ -245,6 +210,37 @@ export default async function handler(req, res) {
   if (news === 'true') {
     const data = await fetchNews();
     return res.status(200).json({ news: data });
+  }
+
+
+  // ── FRED API ──────────────────────────────────────────────────────────
+  if (req.query.fred) {
+    const id = req.query.fred;
+    const yoy = req.query.yoy === '1';
+    try {
+      const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${encodeURIComponent(id)}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/csv' },
+        signal: AbortSignal.timeout(12000)
+      });
+      const txt = await r.text();
+      const lines = txt.trim().split('\n').filter(l => !l.startsWith('DATE') && l.trim());
+      if (!lines.length) return res.status(200).json({ value: null, prev: null, date: null });
+      const lastParts = lines[lines.length-1].split(',');
+      const prevParts = lines[lines.length-2]?.split(',');
+      let value = parseFloat(lastParts[1]);
+      let prev  = prevParts ? parseFloat(prevParts[1]) : null;
+      const date = lastParts[0];
+      if (yoy && lines.length > 13) {
+        const yAgo = parseFloat(lines[lines.length-13]?.split(',')[1]);
+        if (yAgo > 0) {
+          prev  = prev  ? ((prev/yAgo)-1)*100  : null;
+          value = ((value/yAgo)-1)*100;
+        }
+      }
+      return res.status(200).json({ value: isNaN(value)?null:Math.round(value*100)/100, prev: prev&&!isNaN(prev)?Math.round(prev*100)/100:null, date });
+    } catch(e) {
+      return res.status(200).json({ value: null, prev: null, date: null, error: e.message });
+    }
   }
 
   if (!symbols) return res.status(400).json({ error: 'symbols required' });
