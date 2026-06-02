@@ -72,7 +72,12 @@ async function fetchYahooChart(sym) {
       signal: AbortSignal.timeout(8000)
     });
     const d = await r.json();
-    return d?.chart?.result?.[0]?.meta || null;
+    const res = d?.chart?.result?.[0];
+    const meta = res?.meta || null;
+    const closes = (res?.indicators?.quote?.[0]?.close || []).filter(v => v != null && !isNaN(v));
+    const lastClose = closes.length ? closes[closes.length - 1] : null;
+    const prevClose = closes.length > 1 ? closes[closes.length - 2] : null;
+    return meta ? { meta, lastClose, prevClose } : null;
   } catch(e) { return null; }
 }
 
@@ -94,36 +99,38 @@ async function fetchHistory(sym, range, interval) {
       const points = res2.timestamp
         .map((t, i) => ({ t: t * 1000, c: closes[i] }))
         .filter(p => p.c != null && !isNaN(p.c));
-      if (points.length > 5) return points;
+      if (points.length >= 2) return points;
     } catch(e) { continue; }
   }
   return [];
 }
 
 // ─── COT CFTC ────────────────────────────────────────────────────────────────
-// Uses CFTC publicreporting Socrata API with correct field names
+// Uses CFTC publicreporting Socrata API (legacy futures-only dataset)
 async function fetchCOT() {
-  // Correct endpoint and field names from CFTC Socrata
-  // Dataset: Disaggregated Futures Only (fin7-q036) — has managed_money fields
-  // Legacy dataset (jun7-ma8e) uses noncomm_positions_long_all
+  const dataset = '6dca-aqww';
   const contracts = [
     { code:'085692', name:'Copper (COMEX)',   col:'#f0a020' },
-    { code:'033661', name:'Gold (COMEX)',     col:'#ffd700' },
+    { code:'088691', name:'Gold (COMEX)',     col:'#ffd700' },
   ];
   const results = [];
   for (const c of contracts) {
     try {
-      // Try legacy report first (most reliable for metals)
-      const url = `https://publicreporting.cftc.gov/resource/jun7-ma8e.json?$where=cftc_commodity_code=%27${c.code}%27&$order=report_date_as_yyyy_mm_dd+DESC&$limit=2`;
+      // Contract market code is stable for COMEX contracts.
+      const url =
+        `https://publicreporting.cftc.gov/resource/${dataset}.json` +
+        `?%24select=report_date_as_yyyy_mm_dd%2Cnoncomm_positions_long_all%2Cnoncomm_positions_short_all%2Ccftc_contract_market_code` +
+        `&%24where=cftc_contract_market_code%20%3D%20%27${c.code}%27` +
+        `&%24order=report_date_as_yyyy_mm_dd%20DESC` +
+        `&%24limit=2`;
       const r = await fetch(url, {
         headers: { 'Accept': 'application/json' },
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(15000)
       });
       const data = await r.json();
       if (!Array.isArray(data) || data.length < 1) continue;
       const latest = data[0];
       const prev   = data[1] || data[0];
-      // Field names in CFTC legacy dataset
       const longL  = parseInt(latest.noncomm_positions_long_all  || latest.noncommercial_positions_long  || 0);
       const shortL = parseInt(latest.noncomm_positions_short_all || latest.noncommercial_positions_short || 0);
       const longP  = parseInt(prev.noncomm_positions_long_all    || prev.noncommercial_positions_long    || 0);
@@ -143,6 +150,10 @@ async function fetchNews() {
   const feeds = [
     'https://www.mining.com/feed/',
     'https://www.kitco.com/rss/metals-news.rss',
+    'https://feeds.reuters.com/reuters/marketsNews',
+    'https://feeds.reuters.com/news/wealth',
+    'https://www.ecb.europa.eu/rss/press.html',
+    'https://www.investing.com/rss/news_1.rss',
   ];
   const items = [];
   for (const feed of feeds) {
@@ -218,23 +229,42 @@ export default async function handler(req, res) {
     const id = req.query.fred;
     const yoy = req.query.yoy === '1';
     try {
-      const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${encodeURIComponent(id)}`, {
+      // Restrict the history window to reduce payload and timeout risk.
+      const cosd = yoy ? '2017-01-01' : '2021-01-01';
+      const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${encodeURIComponent(id)}&cosd=${cosd}`, {
         headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/csv' },
-        signal: AbortSignal.timeout(12000)
+        signal: AbortSignal.timeout(25000)
       });
       const txt = await r.text();
-      const lines = txt.trim().split('\n').filter(l => !l.startsWith('DATE') && l.trim());
-      if (!lines.length) return res.status(200).json({ value: null, prev: null, date: null });
-      const lastParts = lines[lines.length-1].split(',');
-      const prevParts = lines[lines.length-2]?.split(',');
-      let value = parseFloat(lastParts[1]);
-      let prev  = prevParts ? parseFloat(prevParts[1]) : null;
-      const date = lastParts[0];
-      if (yoy && lines.length > 13) {
-        const yAgo = parseFloat(lines[lines.length-13]?.split(',')[1]);
-        if (yAgo > 0) {
-          prev  = prev  ? ((prev/yAgo)-1)*100  : null;
-          value = ((value/yAgo)-1)*100;
+      // Some invalid IDs return HTML instead of CSV.
+      if (/^\s*</.test(txt) || /<\/html>/i.test(txt)) {
+        return res.status(200).json({ value: null, prev: null, date: null, error: 'series unavailable' });
+      }
+      const rows = txt.trim().split('\n')
+        .filter(l => !l.startsWith('DATE') && l.trim())
+        .map(l => {
+          const parts = l.split(',');
+          const v = parseFloat(parts[1]);
+          return { date: parts[0], value: Number.isFinite(v) ? v : null };
+        })
+        .filter(r2 => r2.value != null);
+
+      if (!rows.length) return res.status(200).json({ value: null, prev: null, date: null });
+
+      const latest = rows[rows.length - 1];
+      const previous = rows[rows.length - 2] || null;
+      let value = latest.value;
+      let prev = previous ? previous.value : null;
+      const date = latest.date;
+
+      if (yoy && rows.length > 13) {
+        const yAgo = rows[rows.length - 13]?.value;
+        if (Number.isFinite(yAgo) && yAgo > 0) {
+          prev = Number.isFinite(prev) ? ((prev / yAgo) - 1) * 100 : null;
+          value = ((value / yAgo) - 1) * 100;
+        } else {
+          prev = null;
+          value = null;
         }
       }
       return res.status(200).json({ value: isNaN(value)?null:Math.round(value*100)/100, prev: prev&&!isNaN(prev)?Math.round(prev*100)/100:null, date });
@@ -273,9 +303,13 @@ export default async function handler(req, res) {
             shortName: name, source: 'westmetall',
           });
         } else {
-          const meta = await fetchYahooChart(sym);
-          if (meta) {
-            const price = meta.regularMarketPrice, prev = meta.regularMarketPreviousClose || price;
+          const chart = await fetchYahooChart(sym);
+          if (chart?.meta) {
+            const meta = chart.meta;
+            const price = meta.regularMarketPrice ?? chart.lastClose;
+            const prev = (meta.regularMarketPreviousClose != null && meta.regularMarketPreviousClose !== price)
+              ? meta.regularMarketPreviousClose
+              : (chart.prevClose ?? meta.regularMarketPreviousClose ?? price);
             results.push({
               symbol: sym, regularMarketPrice: price,
               regularMarketChange: price-prev,
@@ -291,9 +325,13 @@ export default async function handler(req, res) {
           }
         }
       } else {
-        const meta = await fetchYahooChart(sym);
-        if (meta) {
-          const price = meta.regularMarketPrice, prev = meta.regularMarketPreviousClose||price, chg = price-prev;
+        const chart = await fetchYahooChart(sym);
+        if (chart?.meta) {
+          const meta = chart.meta;
+          const price = meta.regularMarketPrice ?? chart.lastClose;
+          const rawPrev = meta.regularMarketPreviousClose;
+          const prev = (rawPrev != null && rawPrev !== price) ? rawPrev : (chart.prevClose ?? rawPrev ?? price);
+          const chg = (price ?? 0) - (prev ?? 0);
           results.push({
             symbol: sym, regularMarketPrice: price,
             regularMarketChange: chg, regularMarketChangePercent: prev>0?(chg/prev)*100:0,

@@ -5,6 +5,7 @@
 <script>function showPage(id){if(window._spReady){window._doShowPage(id);}else{window._spPending=id;}}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Metal Trading SAS — Base Metals Terminal</title>
+<link rel="icon" href="data:,">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -290,12 +291,13 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
     </div>
 
     <div class="pg" id="page-termstruct">
-      <div class="sh"><div class="st">Term Structure</div><div class="ss">CONTANGO / BACKWARDATION — LIVE SPOT + MODELED SPREADS</div></div>
-      <div class="wb">⚠ Spot prices live from westmetall.com (LME official). Forward spreads modeled from typical LME structure. Official LME forward data requires paid access.</div>
+      <div class="sh"><div class="st">Term Structure</div><div class="ss">FREE MODE — LME CASH + 3M (DAY-DELAYED) + EXTRAPOLATED CURVE</div></div>
+      <div class="wb">Free data mode: Cash and 3M come from public LME-delayed sources (via westmetall). 1M/6M/12M/24M/36M points are extrapolated from observed cash-3M basis and shown as indicative values.</div>
       <div class="pn" style="margin-bottom:12px">
         <div class="ph"><span class="pt">All Metals — Curve Structure</span><span class="pk" id="ts-stamp">—</span></div>
-        <div class="pb tw"><table><thead><tr><th>METAL</th><th>SPOT</th><th>1M</th><th>3M</th><th>6M</th><th>12M</th><th>24M</th><th>STRUCTURE</th><th>SPREAD 3M ($/t)</th><th>ANN. %</th></tr></thead>
+        <div class="pb tw"><table><thead><tr><th>METAL</th><th>SPOT</th><th>1M*</th><th>3M (MKT)</th><th>6M*</th><th>12M*</th><th>24M*</th><th>STRUCTURE</th><th>SPREAD 3M ($/t)</th><th>ANN. %</th></tr></thead>
         <tbody id="ts-tbl"><tr><td colspan="10" style="color:#8a9ab0"><span class="sp2"></span>Loading…</td></tr></tbody></table></div>
+        <div style="margin-top:6px;font-size:10px;color:#8a9ab0">* Indicative extrapolated points (not official LME prompt prices)</div>
       </div>
       <div class="g2">
         <div class="pn">
@@ -329,7 +331,7 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
           <div class="pb tw"><table><thead><tr><th>INDICATOR</th><th>VALUE</th><th>PREV</th><th>IMPACT</th></tr></thead><tbody id="mac-tbl"></tbody></table></div>
         </div>
         <div class="pn"><div class="ph"><span class="pt">Central Banks</span></div>
-          <div class="pb tw"><table><thead><tr><th>CB</th><th>RATE</th><th>NEXT MTG</th><th>EXPECTED</th><th>IMPACT</th></tr></thead><tbody id="cb-tbl"></tbody></table></div>
+          <div class="pb tw"><table><thead><tr><th>CB</th><th>RATE</th><th>CPI</th><th>NEXT MTG</th><th>EXPECTED</th><th>IMPACT</th></tr></thead><tbody id="cb-tbl"></tbody></table></div>
         </div>
       </div>
       <div class="pn"><div class="ph"><span class="pt">Event Calendar</span></div>
@@ -345,7 +347,7 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
     <div class="pg" id="page-news">
       <div class="sh"><div class="st">News Feed</div><div class="ss">BASE METALS • FX • MACRO</div></div>
       <div class="g2">
-        <div class="pn"><div class="ph"><span class="pt">Latest Headlines</span></div><div class="pb"><div id="nf"></div></div></div>
+        <div class="pn"><div class="ph"><span class="pt">Latest Headlines</span><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select id="news-filter" style="width:120px;font-size:10px" onchange="setNewsFilter(this.value)"><option value="all">All</option><option value="metals">Metals</option><option value="fx">FX</option><option value="macro">Macro</option><option value="supply">Supply Risk</option></select><input id="news-q" type="text" placeholder="Search..." style="width:150px;font-size:10px" oninput="setNewsQuery(this.value)"></div></div><div class="pb"><div id="nf"></div></div></div>
         <div class="pn"><div class="ph"><span class="pt">Polymarket — Macro Predictions</span><span class="pk">gamma-api.polymarket.com</span></div><div class="pb"><div id="poly-feed"><span class="sp2"></span>Loading…</div></div></div>
       </div>
     </div>
@@ -396,6 +398,8 @@ let D = {};           // live market data keyed by ticker
 let lastFetch = null;
 let fetchOk = false;
 let countdown = 60;
+let FX_DAY_PREV = {}; // previous daily close by FX ticker
+let FX_FIRST_RENDER_LOGGED = false;
 
 // ═══════════════════════════════════════════════
 // YAHOO FINANCE FETCH
@@ -419,10 +423,26 @@ async function fetchYahoo(tickers) {
   if (!quotes.length) throw new Error('Empty response');
 
   quotes.forEach(q => {
+    const prevSeen = D[q.symbol];
+    let change = q.regularMarketChange;
+    let pct = q.regularMarketChangePercent;
+    let pctSource = 'api';
+    // FX feeds often return price == previousClose (thus 0% all day).
+    // Prefer previous daily close from history to keep a true "day" basis.
+    if ((q.symbol || '').includes('=X') && (pct === 0 || pct == null) && q.regularMarketPrice != null) {
+      const dayPrev = FX_DAY_PREV[q.symbol];
+      if (dayPrev != null && dayPrev !== 0) {
+        change = q.regularMarketPrice - dayPrev;
+        pct = (change / dayPrev) * 100;
+        pctSource = 'daily_history_prev_close';
+      } else {
+        pctSource = 'api_zero_no_daily_baseline';
+      }
+    }
     D[q.symbol] = {
       price:  q.regularMarketPrice,
-      change: q.regularMarketChange,
-      pct:    q.regularMarketChangePercent,
+      change,
+      pct,
       open:   q.regularMarketOpen,
       high:   q.regularMarketDayHigh,
       low:    q.regularMarketDayLow,
@@ -431,14 +451,49 @@ async function fetchYahoo(tickers) {
       w52l:   q.fiftyTwoWeekLow,
       state:  q.marketState,
       name:   q.shortName,
+      pctSource,
+      threeMonthPrice: q.threeMonthPrice,
+      source: q.source,
     };
+    if ((q.symbol || '').includes('=F')) {
+      // #region agent log
+      fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'ts-pre-fix',hypothesisId:'TS-H1',location:'index.html:451',message:'metal quote payload contains curve fields',data:{symbol:q.symbol,source:q.source||null,has3M:q.threeMonthPrice!=null,threeMonthPrice:q.threeMonthPrice??null,spot:q.regularMarketPrice??null},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+    }
   });
   return quotes.length;
+}
+
+async function ensureFxDailyPrev() {
+  const missing = FX_PAIRS.map(f => f.ticker).filter(t => FX_DAY_PREV[t] == null);
+  if (!missing.length) return;
+  const loaded = await Promise.allSettled(missing.map(async (ticker) => {
+    let pts = [];
+    for (const range of ['1mo', '3mo']) {
+      const r = await fetch(`https://base-metals-terminal.vercel.app/api/quote?symbols=${encodeURIComponent(ticker)}&history=true&range=${range}&interval=1d`, {signal: AbortSignal.timeout(12000)});
+      const j = await r.json();
+      pts = j?.history || [];
+      if (pts.length >= 2) break;
+    }
+    if (pts.length < 2) return {ticker, prev: null};
+    return {ticker, prev: pts[pts.length - 2].c};
+  }));
+  let ok = 0;
+  loaded.forEach((res) => {
+    if (res.status === 'fulfilled' && res.value.prev != null) {
+      FX_DAY_PREV[res.value.ticker] = res.value.prev;
+      ok++;
+    }
+  });
 }
 
 async function fetchAll() {
   setSt('loading');
   document.getElementById('ds-msg').textContent = '';
+  const t0 = Date.now();
+  // #region agent log
+  fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'fx-immediacy-pre-fix',hypothesisId:'FX-H1',location:'index.html:492',message:'fetchAll started',data:{hasFxInState:FX_PAIRS.filter(f=>D[f.ticker]?.price!=null).length,dailyPrevLoaded:Object.keys(FX_DAY_PREV).length,countdown},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
 
   const allTickers = [
     ...Object.values(METALS).map(m => m.ticker),
@@ -446,12 +501,29 @@ async function fetchAll() {
   ];
 
   try {
+    await ensureFxDailyPrev();
+    // #region agent log
+    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'fx-immediacy-pre-fix',hypothesisId:'FX-H2',location:'index.html:505',message:'daily prev baseline ready',data:{elapsedMs:Date.now()-t0,loaded:Object.keys(FX_DAY_PREV).length},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     // Split into batches of 8 to avoid URL length issues
     let total = 0;
     for (let i = 0; i < allTickers.length; i += 8) {
       const batch = allTickers.slice(i, i + 8);
       const n = await fetchYahoo(batch);
       total += n;
+      const fxInBatch = batch.filter(t => t.includes('=X'));
+      if (fxInBatch.length) {
+        // #region agent log
+        fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'fx-immediacy-pre-fix',hypothesisId:'FX-H3',location:'index.html:515',message:'batch completed with fx quotes',data:{batchIndex:i/8,elapsedMs:Date.now()-t0,fxInBatch,fxNowLoaded:FX_PAIRS.filter(f=>D[f.ticker]?.price!=null).length},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        // Render immediately when first FX quotes arrive instead of waiting all batches.
+        if (batch.includes('EURUSD=X')) {
+          // #region agent log
+          fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'fx-immediacy-post-fix',hypothesisId:'FX-H6',location:'index.html:523',message:'early ui refresh after first fx batch',data:{elapsedMs:Date.now()-t0,eurusd:D['EURUSD=X']?{price:D['EURUSD=X'].price,pct:D['EURUSD=X'].pct,pctSource:D['EURUSD=X'].pctSource}:null},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          updateAll();
+        }
+      }
       if (i + 8 < allTickers.length) await sleep(200);
     }
 
@@ -470,6 +542,9 @@ async function fetchAll() {
     console.error('Fetch error:', e);
   }
 
+  // #region agent log
+  fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'fx-immediacy-pre-fix',hypothesisId:'FX-H4',location:'index.html:536',message:'fetchAll finished',data:{elapsedMs:Date.now()-t0,fetchOk,eurusd:D['EURUSD=X']?{price:D['EURUSD=X'].price,pct:D['EURUSD=X'].pct,pctSource:D['EURUSD=X'].pctSource}:null},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   updateAll();
 }
 
@@ -540,11 +615,21 @@ function updTopbar() {
     if (p) { el.textContent = '$' + f0(p); el.className = 'tbv ' + fc(d?.change); }
   });
   const eu = fxData('EUR/USD');
-  if (eu) { document.getElementById('tb-fx').textContent = f4(eu.price); document.getElementById('tb-fx').className = 'tbv ' + fc(eu.change); }
+  if (eu) {
+    document.getElementById('tb-fx').textContent = f4(eu.price); document.getElementById('tb-fx').className = 'tbv ' + fc(eu.change);
+    if (!FX_FIRST_RENDER_LOGGED) {
+      FX_FIRST_RENDER_LOGGED = true;
+      // #region agent log
+      fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'fx-immediacy-pre-fix',hypothesisId:'FX-H5',location:'index.html:617',message:'topbar fx first render',data:{price:eu.price,pct:eu.pct,pctSource:eu.pctSource,lastFetch:lastFetch?lastFetch.toISOString():null},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+    }
+  }
 }
 
 function updSidebar() {
-  document.getElementById('sb-metals').innerHTML = Object.entries(METALS).map(([k,m]) => {
+  const sbMetals = document.getElementById('sb-metals');
+  if (!sbMetals) return;
+  sbMetals.innerHTML = Object.entries(METALS).map(([k,m]) => {
     const p = metalPrice(k); const d = metalData(k);
     return `<div><span class="md" style="background:${m.col}"></span>${k} – <span class="${p ? fc(d?.change) : 'neu'}">${p ? '$' + f0(p) : '—'}</span></div>`;
   }).join('');
@@ -902,7 +987,7 @@ function calcH() {
     // Net: unhedged portion P&L + hedged portion P&L
     const unhedgedPortion = exp * (1 - ratio);
     const net = (unhedgedPortion * mv) + hPnl - hedged * (fwd/sp - 1);
-    return `<tr><td class="${mv>0?'up':mv<0?'dn':'neu'}">${mv>0?'+':''}${(mv*100).toFixed(0)}%</td><td class="${fc(uPnl)}">${uPnl>0?'+':''}$${Math.round(uPnl).toLocaleString()}</td><td class="${fc(hPnl)}">${hPnl>0?'+':''}$${Math.round(hPnl).toLocaleString()}</td><td class="${fc(ben)}">${ben>0?'+':''}$${Math.round(ben).toLocaleString()}</td></tr>`;
+    return `<tr><td class="${mv>0?'up':mv<0?'dn':'neu'}">${mv>0?'+':''}${(mv*100).toFixed(0)}%</td><td class="${fc(uPnl)}">${uPnl>0?'+':''}$${Math.round(uPnl).toLocaleString()}</td><td class="${fc(hPnl)}">${hPnl>0?'+':''}$${Math.round(hPnl).toLocaleString()}</td><td class="${fc(net)}">${net>0?'+':''}$${Math.round(net).toLocaleString()}</td></tr>`;
   }).join('');
 
   const cv=document.getElementById('h-cv');if(!cv)return;const W=cv.offsetWidth||400,H=200;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);
@@ -920,53 +1005,116 @@ function calcH() {
 function buildMacro() {
   // ── CB Rates via FRED proxy ───────────────────────────────────────────
   const cbIds = [
-    {id:'DFEDTARU', label:'Fed (upper bound)',  sfx:'%', next:'Jun 17 2026', imp:'↔ USD neutral'},
-    {id:'ECBDFR',   label:'ECB (deposit rate)', sfx:'%', next:'Jun 12 2026', imp:'↑ EUR/USD'},
-    {id:'RBAAOARD', label:'RBA',                sfx:'%', next:'Jul 1 2026',  imp:'↔ AUD stable'},
+    {id:'DFEDTARU', label:'Fed (upper bound)',  sfx:'%', next:'Jun 17 2026', cpiId:'CPIAUCSL', cpiYoy:true},
+    {id:'ECBDFR',   label:'ECB (deposit rate)', sfx:'%', next:'Jun 12 2026', cpiId:'CP0000EZ19M086NEST', cpiYoy:false},
+    {id:'IR3TIB01AUM156N', label:'RBA (cash rate)', sfx:'%', next:'Jul 1 2026', cpiId:'FPCPITOTLZGAUS', cpiYoy:false},
   ];
-  Promise.all(cbIds.map(s =>
-    fetch('https://base-metals-terminal.vercel.app/api/quote?fred='+s.id, {signal:AbortSignal.timeout(15000)})
-      .then(r=>r.json())
-      .then(d=>({...s, rate: d.value!=null ? d.value.toFixed(2)+s.sfx : '—', date: d.date||''}))
-      .catch(()=>({...s, rate:'—', date:''}))
-  )).then(rows => {
-    fetch('https://base-metals-terminal.vercel.app/api/quote?pboc=true',{signal:AbortSignal.timeout(8000)})
-      .then(r=>r.json()).then(d=>{rows.push({label:'PBOC (1Y LPR)',rate:d.pboc?d.pboc+'%':'—',next:'Jun 20 2026',imp:'↑ China stim',date:''});})
-      .catch(()=>rows.push({label:'PBOC (1Y LPR)',rate:'—',next:'Jun 20 2026',imp:'↑ China stim',date:''}))
+  const monthsSince = (isoDate) => {
+    if (!isoDate || isoDate === '—') return null;
+    const d = new Date(isoDate);
+    if (isNaN(d.getTime())) return null;
+    return (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 30.4375);
+  };
+  Promise.all(cbIds.map(async s => {
+    try {
+      const [rateRes, cpiRes] = await Promise.all([
+        fetch('https://base-metals-terminal.vercel.app/api/quote?fred='+s.id, {signal:AbortSignal.timeout(15000)}).then(r=>r.json()),
+        fetch('https://base-metals-terminal.vercel.app/api/quote?fred='+s.cpiId+'&yoy='+(s.cpiYoy?'1':'0'), {signal:AbortSignal.timeout(15000)}).then(r=>r.json()),
+      ]);
+      const rate = rateRes?.value!=null && isFinite(rateRes.value) ? rateRes.value.toFixed(2)+s.sfx : '—';
+      const cpi = cpiRes?.value!=null && isFinite(cpiRes.value) ? cpiRes.value.toFixed(2)+'%' : '—';
+      const rateNum = rateRes?.value!=null && isFinite(rateRes.value) ? rateRes.value : null;
+      const cpiNum = cpiRes?.value!=null && isFinite(cpiRes.value) ? cpiRes.value : null;
+      const imp = rateNum==null||cpiNum==null ? 'Data unavailable' : (rateNum>=cpiNum ? 'Real rates positive' : 'Real rates negative');
+      return {...s, rate, cpi, date: rateRes?.date || '', imp};
+    } catch(_e) {
+      return {...s, rate:'—', cpi:'—', date:'', imp:'Data unavailable'};
+    }
+  })).then(rows => {
+    Promise.all([
+      fetch('https://base-metals-terminal.vercel.app/api/quote?pboc=true',{signal:AbortSignal.timeout(8000)}).then(r=>r.json()).catch(()=>({pboc:null})),
+      fetch('https://base-metals-terminal.vercel.app/api/quote?fred=FPCPITOTLZGCHN',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).catch(()=>({value:null})),
+      fetch('https://base-metals-terminal.vercel.app/api/quote?fred=IR3TIB01CNM156N',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).catch(()=>({value:null,date:null})),
+    ]).then(([pboc, chinaCpi, pbocFallback])=>{
+      const cnCpi = chinaCpi?.value!=null && isFinite(chinaCpi.value) ? chinaCpi.value.toFixed(2)+'%' : '—';
+      const pbocMain = pboc?.pboc!=null && isFinite(parseFloat(pboc.pboc)) ? parseFloat(pboc.pboc) : null;
+      const pbocFb = pbocFallback?.value!=null && isFinite(pbocFallback.value) ? pbocFallback.value : null;
+      const pbocRate = pbocMain!=null ? pbocMain : pbocFb;
+      const pbocDate = pbocMain!=null ? '' : (pbocFallback?.date || '');
+      rows.push({label:'PBOC (1Y LPR)',rate:pbocRate!=null?pbocRate.toFixed(2)+'%':'—',cpi:cnCpi,next:'Jun 20 2026',imp:'China easing signal',date:pbocDate,pbocFallbackUsed:pbocMain==null&&pbocFb!=null});
+    })
       .finally(()=>{
+        const stale = rows.filter(r => {
+          const m = monthsSince(r.date || '');
+          return m != null && m > 6;
+        }).map(r => ({ label: r.label, date: r.date }));
+        // #region agent log
+        fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H6',location:'index.html:997',message:'central bank rows resolved',data:{count:rows.length,labels:rows.map(r=>r.label),missingRate:rows.filter(r=>r.rate==='—').length,missingCpi:rows.filter(r=>r.cpi==='—').length,pbocFallbackUsed:rows.find(r=>r.label.includes('PBOC'))?.pbocFallbackUsed===true,stale},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        // #region agent log
+        fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H8',location:'index.html:1008',message:'central bank table freshness',data:{freshness:rows.map(r=>({label:r.label,date:r.date||null,monthsSince:monthsSince(r.date||'')}))},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         const el=document.getElementById('cb-tbl'); if(!el) return;
         el.innerHTML=rows.map(r=>`<tr>
           <td class="hl">${r.label}</td><td class="am">${r.rate}</td>
-          <td class="neu">${r.next}</td><td style="font-size:9px;color:#8a9ab0">FRED${r.date?' · '+r.date:''}</td>
-          <td class="${r.imp.includes('↑')?'up':'neu'}">${r.imp}</td>
+          <td class="hl">${r.cpi}</td><td class="neu">${r.next}</td><td style="font-size:9px;color:#8a9ab0">FRED${r.date?' · '+r.date:''}</td>
+          <td class="${r.imp.includes('positive')?'up':r.imp.includes('negative')?'dn':'neu'}">${r.imp}</td>
         </tr>`).join('');
       });
   });
 
   // ── Macro indicators via FRED proxy ──────────────────────────────────
   const fredIds = [
-    {id:'INDPRO',   label:'US Industrial Production', imp:'↑ Bullish metals', yoy:true},
-    {id:'CPIAUCSL', label:'US CPI YoY',               imp:'↑ Softer = weaker USD', yoy:true},
-    {id:'UNRATE',   label:'US Unemployment',          imp:'↔ Employment signal', yoy:false},
-    {id:'DTWEXBGS', label:'USD Broad Index',           imp:'↑ USD weaker = metals +', yoy:false},
-    {id:'T10Y2Y',   label:'2s10s Spread',             imp:'↔ Yield curve signal', yoy:false},
-    {id:'FEDFUNDS', label:'Effective Fed Funds',      imp:'↔ Rates impact', yoy:false},
-    {id:'CHNPMICN', label:'China Mfg PMI',            imp:'↑ >50 = metals demand', yoy:false},
+    {id:'INDPRO',   label:'US Industrial Production', yoy:true},
+    {id:'CPIAUCSL', label:'US CPI YoY',               yoy:true},
+    {id:'UNRATE',   label:'US Unemployment',          yoy:false},
+    {id:'DTWEXBGS', label:'USD Broad Index',          yoy:false},
+    {id:'T10Y2Y',   label:'2s10s Spread',             yoy:false},
+    {id:'FEDFUNDS', label:'Effective Fed Funds',      yoy:false},
+    {id:'IPG21223S', label:'US Mining Output (Cu/Ni/Pb/Zn)', yoy:false},
   ];
   const macEl=document.getElementById('mac-tbl');
   if(macEl) macEl.innerHTML='<tr><td colspan="4" style="color:#8a9ab0"><span class="sp2"></span>Fetching FRED data…</td></tr>';
 
+  const macroSignal = (label, value, prev) => {
+    if (value == null || prev == null || !isFinite(value) || !isFinite(prev)) return { txt:'Data unavailable', cls:'neu' };
+    const d = value - prev;
+    if (Math.abs(d) < 0.01) return { txt:'Stable vs prev release', cls:'neu' };
+    if (label.includes('USD Broad Index')) return d > 0 ? { txt:'USD stronger (metals headwind)', cls:'dn' } : { txt:'USD softer (metals support)', cls:'up' };
+    if (label.includes('US CPI')) return d > 0 ? { txt:'Inflation re-acceleration', cls:'dn' } : { txt:'Inflation cooling', cls:'up' };
+    if (label.includes('Unemployment')) return d > 0 ? { txt:'Labor market softening', cls:'am' } : { txt:'Labor market firming', cls:'up' };
+    if (label.includes('Industrial Production')) return d > 0 ? { txt:'Industrial activity improving', cls:'up' } : { txt:'Industrial activity weakening', cls:'dn' };
+    if (label.includes('Mining Output (Cu/Ni/Pb/Zn)')) return d > 0 ? { txt:'Mine supply momentum improving', cls:'up' } : { txt:'Mine supply momentum softening', cls:'dn' };
+    if (label.includes('Fed Funds')) return d > 0 ? { txt:'Policy tighter', cls:'dn' } : { txt:'Policy easing bias', cls:'up' };
+    if (label.includes('2s10s Spread')) return d > 0 ? { txt:'Curve steepening', cls:'up' } : { txt:'Curve flattening', cls:'dn' };
+    return d > 0 ? { txt:'Up vs prev release', cls:'up' } : { txt:'Down vs prev release', cls:'dn' };
+  };
+
   Promise.all(fredIds.map(s=>
     fetch('https://base-metals-terminal.vercel.app/api/quote?fred='+s.id+'&yoy='+(s.yoy?'1':'0'), {signal:AbortSignal.timeout(15000)})
       .then(r=>r.json())
-      .then(d=>([s.label, d.value!=null?d.value.toFixed(2)+(s.yoy?'%':''):'—', d.prev!=null?d.prev.toFixed(2)+(s.yoy?'%':''):'—', s.imp, d.date||'—']))
-      .catch(()=>([s.label,'—','—',s.imp,'—']))
+      .then(d=>({
+        label:s.label,
+        value:d.value!=null&&isFinite(d.value)?d.value:null,
+        prev:d.prev!=null&&isFinite(d.prev)?d.prev:null,
+        valueText:d.value!=null&&isFinite(d.value)?d.value.toFixed(2)+(s.yoy?'%':''):'—',
+        prevText:d.prev!=null&&isFinite(d.prev)?d.prev.toFixed(2)+(s.yoy?'%':''):'—',
+        date:d.date||'—'
+      }))
+      .catch(()=>({label:s.label,value:null,prev:null,valueText:'—',prevText:'—',date:'—'}))
   )).then(rows=>{
+    // #region agent log
+    const mt = rows.find(r => (r.label||'').includes('Mining Output'));
+    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H7',location:'index.html:1047',message:'metal macro row value',data:{label:mt?.label||null,value:mt?.valueText||null,prev:mt?.prevText||null,date:mt?.date||null,monthsSince:monthsSince(mt?.date||'')},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    // #region agent log
+    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H1',location:'index.html:1034',message:'macro fred rows resolved',data:{count:rows.length,missing:rows.filter(r=>r.valueText==='—').length,ids:fredIds.map(i=>i.id)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if(!macEl) return;
-    macEl.innerHTML=rows.map(([lb,v,p,imp,d])=>{
-      const c=imp.startsWith('↑')?'up':imp.startsWith('↓')?'dn':'neu';
-      return`<tr><td>${lb} <span style="font-size:9px;color:#8a9ab0">${d}</span></td>
-        <td class="hl">${v}</td><td class="neu">${p}</td><td class="${c}">${imp}</td></tr>`;
+    macEl.innerHTML=rows.map((row)=>{
+      const sig = macroSignal(row.label, row.value, row.prev);
+      return`<tr><td>${row.label} <span style="font-size:9px;color:#8a9ab0">${row.date}</span></td>
+        <td class="hl">${row.valueText}</td><td class="neu">${row.prevText}</td><td class="${sig.cls}">${sig.txt}</td></tr>`;
     }).join('');
   });
 
@@ -978,6 +1126,9 @@ function buildMacro() {
     ['Jun 20 2026','PBOC LPR','MED','CNY → metals','Hold','3.00%'],
     ['Jul 1 2026','RBA rate decision','MED','AUD/USD','Hold','3.60%'],
   ];
+  // #region agent log
+  fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H2',location:'index.html:1043',message:'macro event calendar source',data:{source:'static_array',count:events.length},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   const evEl=document.getElementById('ev-tbl');
   if(evEl) evEl.innerHTML=events.map(([d,e,i,m,c,p])=>
     `<tr><td class="am">${d}</td><td>${e}</td><td class="${i==='HIGH'?'dn':'am'}">${i}</td>
@@ -990,28 +1141,75 @@ function buildMacro() {
 // ═══════════════════════════════════════════════
 // NEWS — editorial, updated contextually
 // ═══════════════════════════════════════════════
+let NEWS_RAW = [];
+let NEWS_FILTER = 'all';
+let NEWS_QUERY = '';
+function detectNewsBucket(title){
+  const t = (title || '').toLowerCase();
+  if (/(usd|eur|fx|dollar|yen|gbp|aud|cny|forex)/.test(t)) return 'fx';
+  if (/(fed|ecb|fomc|inflation|gdp|pmi|rates|macro|central bank|cpi|ppi)/.test(t)) return 'macro';
+  if (/(strike|mine|disruption|sanction|outage|export|supply|shutdown|smelter)/.test(t)) return 'supply';
+  return 'metals';
+}
+function setNewsItems(items){
+  NEWS_RAW = (items || []).map(n => ({...n, bucket: detectNewsBucket(n.title)}));
+  // #region agent log
+  fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'news-filter-pre-fix',hypothesisId:'N-H1',location:'index.html:1077',message:'news items normalized',data:{count:NEWS_RAW.length,buckets:{metals:NEWS_RAW.filter(i=>i.bucket==='metals').length,fx:NEWS_RAW.filter(i=>i.bucket==='fx').length,macro:NEWS_RAW.filter(i=>i.bucket==='macro').length,supply:NEWS_RAW.filter(i=>i.bucket==='supply').length}},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  renderNewsFeed();
+}
+function setNewsFilter(v){
+  NEWS_FILTER = v || 'all';
+  // #region agent log
+  fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'news-filter-pre-fix',hypothesisId:'N-H2',location:'index.html:1084',message:'news filter changed',data:{filter:NEWS_FILTER,query:NEWS_QUERY,rawCount:NEWS_RAW.length},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  renderNewsFeed();
+}
+function setNewsQuery(v){
+  NEWS_QUERY = (v || '').trim().toLowerCase();
+  renderNewsFeed();
+}
+function renderNewsFeed(){
+  const nfEl = document.getElementById('nf');
+  if(!nfEl) return;
+  const filtered = NEWS_RAW.filter(n => {
+    const bucketOk = NEWS_FILTER === 'all' ? true : n.bucket === NEWS_FILTER;
+    const qOk = !NEWS_QUERY || (n.title || '').toLowerCase().includes(NEWS_QUERY) || (n.src || '').toLowerCase().includes(NEWS_QUERY);
+    return bucketOk && qOk;
+  });
+  // #region agent log
+  fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'news-filter-pre-fix',hypothesisId:'N-H3',location:'index.html:1097',message:'news filter rendered',data:{filter:NEWS_FILTER,query:NEWS_QUERY,resultCount:filtered.length},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  if (!NEWS_RAW.length) {
+    nfEl.innerHTML = '<div style="color:#8a9ab0;font-size:11px">News temporarily unavailable</div>';
+    return;
+  }
+  if (!filtered.length) {
+    nfEl.innerHTML = '<div style="color:#8a9ab0;font-size:11px">No headlines match current filter</div>';
+    return;
+  }
+  nfEl.innerHTML = filtered.map(n=>{
+    const age=n.date?Math.round((Date.now()-new Date(n.date))/60000):999;
+    const ageStr=age<60?age+'m ago':Math.round(age/60)+'h ago';
+    const tagCls = n.bucket==='fx'?'nfx':n.bucket==='macro'?'nma':n.bucket==='supply'?'nwa':'ncu';
+    const tagTxt = n.bucket.toUpperCase();
+    return`<div class="nit">
+      <div style="display:flex;justify-content:space-between">
+        <span class="nt2">${ageStr} · ${n.src}</span>
+        ${age<180?'<span class="bg bga">NEW</span>':''}
+      </div>
+      <div class="nh"><span class="ntg ${tagCls}">${tagTxt}</span><a href="${n.link}" target="_blank" style="color:var(--text);text-decoration:none">${n.title}</a></div>
+    </div>`;
+  }).join('');
+}
 async function buildNews() {
   // Fetch live news via proxy
   try {
     const r = await fetch('https://base-metals-terminal.vercel.app/api/quote?news=true',{signal:AbortSignal.timeout(15000)});
     const d = await r.json(); const items = d.news||[];
-    const nfEl = document.getElementById('nf');
-    if(nfEl && items.length>0) {
-      nfEl.innerHTML = items.map(n=>{
-        const age=n.date?Math.round((Date.now()-new Date(n.date))/60000):999;
-        const ageStr=age<60?age+'m ago':Math.round(age/60)+'h ago';
-        return`<div class="nit">
-          <div style="display:flex;justify-content:space-between">
-            <span class="nt2">${ageStr} · ${n.src}</span>
-            ${age<180?'<span class="bg bga">NEW</span>':''}
-          </div>
-          <div class="nh"><a href="${n.link}" target="_blank" style="color:var(--text);text-decoration:none">${n.title}</a></div>
-        </div>`;
-      }).join('');
-    }
+    setNewsItems(items);
   } catch(e) {
-    const nfEl=document.getElementById('nf');
-    if(nfEl) nfEl.innerHTML='<div style="color:#8a9ab0;font-size:11px">News temporarily unavailable</div>';
+    setNewsItems([]);
   }
   // Polymarket
   try {
@@ -1065,26 +1263,57 @@ window.addEventListener('resize', () => {
 const TY=[0,1/52,1/12,2/12,3/12,6/12,9/12,1,1.5,2,3];
 let tsVis={Cu:true,Al:true,Ni:true,Zn:false,Pb:false,Sn:false};
 function toggleTs(k,btn){tsVis[k]=!tsVis[k];btn.classList.toggle('act',tsVis[k]);drawTS();}
+function tsCurveFactors(k){
+  const base = TERM[k];
+  const md = metalData(k);
+  const sp = metalPrice(k);
+  const api3m = md?.threeMonthPrice;
+  if (!base || !sp || !api3m || !isFinite(api3m) || api3m <= 0) return base;
+  const obsRatio = api3m / sp;
+  const tplRatio = base[4];
+  const den = tplRatio - 1;
+  if (Math.abs(den) < 1e-8) {
+    const out = [...base];
+    out[4] = obsRatio;
+    return out;
+  }
+  const scale = (obsRatio - 1) / den;
+  const out = base.map((v,i)=>i===0?1:1+(v-1)*scale);
+  out[4] = obsRatio; // exact market-observed 3M node
+  return out;
+}
 
 function buildTS(){
   document.getElementById('ts-stamp').textContent=lastFetch?lastFetch.toUTCString().split(' ')[4]+' UTC':'—';
   let html='';
+  const tsDebugRows=[];
+  const dataMode = 'blended';
   Object.entries(METALS).forEach(([k,m])=>{
     const sp=metalPrice(k); if(!sp){html+=`<tr><td style="color:${m.col}">● ${k}</td><td colspan="9" class="neu">—</td></tr>`;return;}
-    const t=TERM[k];
+    const t=tsCurveFactors(k);
+    const md = metalData(k);
+    const hasApi3m = md?.threeMonthPrice != null;
     const ct=(t[4]-1)*100, struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
     const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
+    tsDebugRows.push({
+      k, spot:sp, term3m:sp*t[4], api3m:md?.threeMonthPrice??null,
+      source:md?.source??null, usedObserved3M:md?.threeMonthPrice!=null,
+      curve3mRatio:t[4], curve12mRatio:t[7], dataMode
+    });
     html+=`<tr><td><span style="color:${m.col}">●</span> ${k} – ${m.name}</td>
-      <td class="hl">$${f0(sp)}</td><td>$${f0(sp*t[2])}</td><td>$${f0(sp*t[4])}</td>
+      <td class="hl">$${f0(sp)}</td><td>$${f0(sp*t[2])}</td><td class="${hasApi3m?'hl':'neu'}">$${f0(sp*t[4])}${hasApi3m?'':'*'}</td>
       <td>$${f0(sp*t[5])}</td><td>$${f0(sp*t[7])}</td><td>$${f0(sp*t[9])}</td>
       <td><span class="sg ${sc}">${struct}</span></td>
       <td class="${ct>0?'up':'dn'}">${ct>0?'+':''}$${f0(sp*(t[4]-1))}</td>
       <td class="${ct>0?'up':'dn'}">${ct>0?'+':''}${(ct*4).toFixed(2)}%</td></tr>`;
   });
+  // #region agent log
+  fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'ts-pre-fix',hypothesisId:'TS-H2',location:'index.html:1148',message:'term-structure table inputs',data:{dataMode,rows:tsDebugRows},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   document.getElementById('ts-tbl').innerHTML=html;
   let sigs='';
   Object.entries(METALS).forEach(([k,m])=>{
-    const t=TERM[k],ct=(t[4]-1)*100;
+    const t=tsCurveFactors(k),ct=(t[4]-1)*100;
     const struct=ct>0.05?'CONTANGO':ct<-0.05?'BACKWARDATION':'FLAT';
     const sc=struct==='CONTANGO'?'slo':struct==='BACKWARDATION'?'ssh':'sne';
     sigs+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
@@ -1100,6 +1329,7 @@ function buildTS(){
 
 function drawTS(){
   const mode=document.getElementById('ts-mode')?.value||'price';
+  const dataMode = 'blended';
   const cv=document.getElementById('ts-cv'); if(!cv) return;
   const W=cv.offsetWidth||600,H=240; cv.width=W; cv.height=H;
   const ctx=cv.getContext('2d'); ctx.clearRect(0,0,W,H);
@@ -1107,13 +1337,16 @@ function drawTS(){
   Object.entries(METALS).forEach(([k,m])=>{
     if(!tsVis[k]) return;
     const sp=metalPrice(k); if(!sp) return;
-    const prices=TERM[k].map(t=>sp*t);
+    const prices=tsCurveFactors(k).map(t=>sp*t);
     let vals=prices;
     if(mode==='basis') vals=prices.map(p=>p-prices[0]);
     if(mode==='ann') vals=prices.map((p,i)=>i===0?0:((p/prices[0])**(1/Math.max(TY[i],.001))-1)*100);
-    allVals.push(...vals); lines.push({k,col:m.col,name:m.name,vals});
+    allVals.push(...vals.filter(v=>isFinite(v))); lines.push({k,col:m.col,name:m.name,vals});
   });
-  if(!lines.length) return;
+  // #region agent log
+  fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'ts-pre-fix',hypothesisId:'TS-H3',location:'index.html:1195',message:'term-structure chart lines',data:{mode,dataMode,visible:Object.entries(tsVis).filter(([,v])=>v).map(([k])=>k),lineCount:lines.length},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  if(!lines.length || !allVals.length) return;
   const mn=Math.min(...allVals),mx=Math.max(...allVals);
   const pad={t:20,b:12,l:56,r:20};
   const W2=W-pad.l-pad.r,H2=H-pad.t-pad.b;
@@ -1138,8 +1371,41 @@ function drawTS(){
 // ═══ COT CFTC ═══
 async function buildCOT(){
   try{
-    const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?cot=true',{signal:AbortSignal.timeout(12000)});
-    const d=await r.json(); const rows=d.cot||[];
+    const contracts = [
+      { code:'085692', name:'Copper (COMEX)', col:'#f0a020' },
+      { code:'088691', name:'Gold (COMEX)',   col:'#ffd700' },
+    ];
+    const rows = [];
+    for (const c of contracts) {
+      const url =
+        'https://publicreporting.cftc.gov/resource/6dca-aqww.json' +
+        '?%24select=report_date_as_yyyy_mm_dd%2Cnoncomm_positions_long_all%2Cnoncomm_positions_short_all' +
+        `&%24where=cftc_contract_market_code%20%3D%20%27${c.code}%27` +
+        '&%24order=report_date_as_yyyy_mm_dd%20DESC' +
+        '&%24limit=2';
+      try{
+        const rr = await fetch(url,{signal:AbortSignal.timeout(12000)});
+        const arr = await rr.json();
+        if(!Array.isArray(arr) || !arr.length) continue;
+        const latest = arr[0];
+        const prev = arr[1] || arr[0];
+        const longL = parseInt(latest.noncomm_positions_long_all || 0);
+        const shortL = parseInt(latest.noncomm_positions_short_all || 0);
+        const longP = parseInt(prev.noncomm_positions_long_all || 0);
+        const shortP = parseInt(prev.noncomm_positions_short_all || 0);
+        const net = longL - shortL;
+        const netP = longP - shortP;
+        rows.push({
+          ...c,
+          longL, shortL, net,
+          chg: net - netP,
+          date: (latest.report_date_as_yyyy_mm_dd || '—').split('T')[0],
+        });
+      }catch(_e){}
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H3',location:'index.html:1225',message:'cot rows fetched',data:{count:rows.length,firstDate:rows[0]?.date||null},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if(!rows.length) throw new Error('No data');
     document.getElementById('cot-stamp').textContent='CFTC — '+(rows[0]?.date||'—');
     document.getElementById('cot-tbl').innerHTML=rows.map(r2=>`<tr>
@@ -1150,7 +1416,12 @@ async function buildCOT(){
       <td class="${r2.chg>0?'up':'dn'}">${r2.chg>0?'+':''}${(r2.chg/1000).toFixed(1)}k</td>
       <td><span class="sg ${r2.net>0?'slo':'ssh'}">${r2.net>0?'NET LONG':'NET SHORT'}</span></td>
     </tr>`).join('');
-  }catch(e){document.getElementById('cot-tbl').innerHTML=`<tr><td colspan="6" class="neu">CFTC unavailable: ${e.message}</td></tr>`;}
+  }catch(e){
+    // #region agent log
+    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H3',location:'index.html:1237',message:'cot fetch failed',data:{error:e?.message||'unknown'},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    document.getElementById('cot-tbl').innerHTML=`<tr><td colspan="6" class="neu">CFTC unavailable: ${e.message}</td></tr>`;
+  }
 }
 
 // ═══ NEWS via Vercel proxy ═══
@@ -1158,15 +1429,10 @@ async function buildNewsLive(){
   try{
     const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?news=true',{signal:AbortSignal.timeout(12000)});
     const d=await r.json(); const items=d.news||[];
-    if(items.length>0){
-      document.getElementById('nf').innerHTML=items.map(n=>{
-        const date=n.date?new Date(n.date):new Date();
-        const age=Math.round((Date.now()-date)/60000);
-        const ageStr=age<60?age+'m ago':Math.round(age/60)+'h ago';
-        return`<div class="nit"><div style="display:flex;justify-content:space-between"><span class="nt2">${ageStr} · ${n.src}</span>${age<180?'<span class="bg bga">NEW</span>':''}</div>
-          <div class="nh"><a href="${n.link}" target="_blank" style="color:var(--text);text-decoration:none">${n.title}</a></div></div>`;
-      }).join('');
-    }
+    // #region agent log
+    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H4',location:'index.html:1245',message:'news feed rows fetched',data:{count:items.length},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    setNewsItems(items);
   }catch(e){/* keep editorial fallback */}
 }
 
@@ -1178,6 +1444,9 @@ async function buildPolymarket(){
     const kw=['fed','rate','china','copper','metal','commodit','inflation','recession','tariff','trade','dollar','gold','gdp'];
     const rel=markets.filter(m=>kw.some(k=>(m.question||'').toLowerCase().includes(k))).slice(0,8);
     const display=rel.length>0?rel:markets.slice(0,8);
+    // #region agent log
+    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H5',location:'index.html:1263',message:'polymarket rows filtered',data:{total:markets.length,relevant:rel.length,display:display.length},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     document.getElementById('poly-feed').innerHTML=display.map(m=>{
       const prob=m.outcomePrices?JSON.parse(m.outcomePrices)[0]:null;
       const pct=prob?Math.round(parseFloat(prob)*100):null;
