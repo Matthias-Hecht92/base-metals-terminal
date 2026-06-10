@@ -208,11 +208,15 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
             <div class="pb">
               <div class="fr">
                 <div><div class="fl">Metal</div><select id="p-met" onchange="syncSpot()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select></div>
-                <div><div class="fl">Type</div><select id="p-typ" onchange="calcOpt()"><option value="call">CALL</option><option value="put">PUT</option></select></div>
+                <div><div class="fl">Strategy</div><select id="p-typ" onchange="calcOpt()"><option value="call">CALL</option><option value="put">PUT</option><option value="straddle">STRADDLE</option><option value="strangle">STRANGLE</option><option value="callspread">CALL SPREAD</option><option value="zcollar">ZERO COST COLLAR</option><option value="putspread">PUT SPREAD</option><option value="butterfly">BUTTERFLY</option></select></div>
               </div>
               <div class="fr">
                 <div><div class="fl">Futures F (USD/t)</div><input type="number" id="p-F" oninput="calcOpt()"></div>
                 <div><div class="fl">Strike K (USD/t)</div><input type="number" id="p-K" oninput="calcOpt()"></div>
+              </div>
+              <div class="fr">
+                <div><div class="fl">Wing / Spread Width (%)</div><input type="number" id="p-w" value="5" step="0.5" min="0.5" oninput="calcOpt()"></div>
+                <div><div class="fl">Notional (lots)</div><input type="number" id="p-n" value="1" step="1" min="1" oninput="calcOpt()"></div>
               </div>
               <div class="fr">
                 <div><div class="fl">Tenor T (years)</div><input type="number" id="p-T" value="0.5" step="0.05" oninput="calcOpt()"></div>
@@ -836,6 +840,33 @@ function drawFwd() {
 function N(x){const t=1/(1+.2316419*Math.abs(x));const p=t*(.31938153+t*(-.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));const d=Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);return x>=0?1-d*p:d*p;}
 function b76(F,K,T,r,s,type){if(T<=0)return type==='call'?Math.max(0,F-K):Math.max(0,K-F);const d1=(Math.log(F/K)+(s*s/2)*T)/(s*Math.sqrt(T)),d2=d1-s*Math.sqrt(T),df=Math.exp(-r*T);return type==='call'?df*(F*N(d1)-K*N(d2)):df*(K*N(-d2)-F*N(-d1));}
 function gr(F,K,T,r,s,type){const h=F*.001,p0=b76(F,K,T,r,s,type);return{delta:(b76(F+h,K,T,r,s,type)-b76(F-h,K,T,r,s,type))/(2*h),gamma:(b76(F+h,K,T,r,s,type)-2*p0+b76(F-h,K,T,r,s,type))/(h*h),vega:(b76(F,K,T,r,s+.0001,type)-p0)/.0001/100,theta:T>.01?b76(F,K,T-1/365,r,s,type)-p0:0,rho:(b76(F,K,T,r+.0001,s,type)-p0)/.0001/100};}
+function mkLeg(type,sign,K){return{type,sign,K};}
+function strategyLegs(F,K,wPct,strat){
+  const w=Math.max(0.005,(wPct||5)/100);
+  const kDn=Math.max(0.0001,K*(1-w));
+  const kUp=K*(1+w);
+  if(strat==='call') return [mkLeg('call',1,K)];
+  if(strat==='put') return [mkLeg('put',1,K)];
+  if(strat==='straddle') return [mkLeg('call',1,K),mkLeg('put',1,K)];
+  if(strat==='strangle') return [mkLeg('put',1,kDn),mkLeg('call',1,kUp)];
+  if(strat==='callspread') return [mkLeg('call',1,K),mkLeg('call',-1,kUp)];
+  if(strat==='putspread') return [mkLeg('put',1,K),mkLeg('put',-1,kDn)];
+  if(strat==='zcollar') return [mkLeg('put',1,kDn),mkLeg('call',-1,kUp)];
+  if(strat==='butterfly') return [mkLeg('call',1,kDn),mkLeg('call',-2,K),mkLeg('call',1,kUp)];
+  return [mkLeg('call',1,K)];
+}
+function strategyPrice(F,T,r,s,legs){return legs.reduce((acc,l)=>acc+l.sign*b76(F,l.K,T,r,s,l.type),0);}
+function strategyGreeks(F,T,r,s,legs){
+  return legs.reduce((acc,l)=>{
+    const g=gr(F,l.K,T,r,s,l.type);
+    acc.delta+=l.sign*g.delta;acc.gamma+=l.sign*g.gamma;acc.vega+=l.sign*g.vega;acc.theta+=l.sign*g.theta;acc.rho+=l.sign*g.rho;
+    return acc;
+  },{delta:0,gamma:0,vega:0,theta:0,rho:0});
+}
+function strategyIntrinsic(F,legs){return legs.reduce((acc,l)=>acc+l.sign*(l.type==='call'?Math.max(0,F-l.K):Math.max(0,l.K-F)),0);}
+function strategyLabel(strat){
+  return {call:'Call',put:'Put',straddle:'Straddle',strangle:'Strangle',callspread:'Call Spread',putspread:'Put Spread',zcollar:'Zero Cost Collar',butterfly:'Butterfly'}[strat]||'Strategy';
+}
 
 function syncSpot() {
   const k = document.getElementById('p-met').value;
@@ -855,22 +886,27 @@ function calcOpt() {
   const F=+document.getElementById('p-F').value||0, K=+document.getElementById('p-K').value||0;
   const T=+document.getElementById('p-T').value||0, r=+document.getElementById('p-r').value/100||0;
   const s=+document.getElementById('p-sig').value/100||0, type=document.getElementById('p-typ').value;
+  const w=+document.getElementById('p-w').value||5;
+  const n=Math.max(1,+document.getElementById('p-n').value||1);
   if(!F||!K||!T||!s){document.getElementById('p-res').innerHTML='<span style="color:var(--text3)">Fill in all parameters</span>';return;}
-  const price=b76(F,K,T,r,s,type), g=gr(F,K,T,r,s,type);
-  const intr=type==='call'?Math.max(0,F-K):Math.max(0,K-F);
-  const money=type==='call'?(F>K?'ITM':F<K?'OTM':'ATM'):(F<K?'ITM':F>K?'OTM':'ATM');
+  const legs=strategyLegs(F,K,w,type);
+  const price=strategyPrice(F,T,r,s,legs);
+  const g=strategyGreeks(F,T,r,s,legs);
+  const intr=strategyIntrinsic(F,legs);
+  const money=Math.abs(F-K)/K<0.005?'ATM':F>K?'Above K':'Below K';
   document.getElementById('p-res').innerHTML=`
-    <div class="rr"><span class="rl">Option Price</span><span class="rv hl">$${price.toFixed(2)}/t</span></div>
-    <div class="rr"><span class="rl">Moneyness</span><span class="rv ${money==='ITM'?'up':money==='OTM'?'dn':'am'}">${money}</span></div>
+    <div class="rr"><span class="rl">Strategy</span><span class="rv hl">${strategyLabel(type)}</span></div>
+    <div class="rr"><span class="rl">Premium (per t)</span><span class="rv hl">$${price.toFixed(2)}</span></div>
+    <div class="rr"><span class="rl">Premium (position)</span><span class="rv">$${(price*n).toFixed(2)}</span></div>
+    <div class="rr"><span class="rl">Spot vs K</span><span class="rv ${money==='ATM'?'am':'neu'}">${money}</span></div>
     <div class="rr"><span class="rl">Intrinsic</span><span class="rv">$${intr.toFixed(2)}</span></div>
-    <div class="rr"><span class="rl">Time Value</span><span class="rv am">$${(price-intr).toFixed(2)}</span></div>
-    <div class="rr"><span class="rl">Breakeven</span><span class="rv">${type==='call'?'$'+(K+price).toFixed(2):'$'+(K-price).toFixed(2)}</span></div>`;
+    <div class="rr"><span class="rl">Time Value</span><span class="rv am">$${(price-intr).toFixed(2)}</span></div>`;
   document.getElementById('p-greeks').innerHTML=[['Δ DELTA',g.delta.toFixed(4)],['Γ GAMMA',g.gamma.toFixed(6)],['ν VEGA',g.vega.toFixed(3)],['θ THETA',g.theta.toFixed(3)],['ρ RHO',g.rho.toFixed(3)]].map(([n,v])=>`<div class="gb"><div class="gs">${n}</div><div class="gv">${v}</div></div>`).join('');
-  drawPnL(F,K,T,r,s,type,price,g.delta); drawTheta(F,K,T,r,s,type);
-  document.getElementById('p-scen').innerHTML=[-0.3,-0.2,-0.1,-0.05,0,0.05,0.1,0.2,0.3].map(mv=>{const nF=F*(1+mv); const newPrice=b76(nF,K,T,r,s,type); const pnl=newPrice-price; const hp=-g.delta*(nF-F); const net=pnl+hp; return`<tr><td class="${mv>0?'up':mv<0?'dn':'neu'}">${mv>0?'+':''}${(mv*100).toFixed(0)}%</td><td>$${f0(nF)}</td><td class="${fc(pnl)}">${pnl>=0?'+':''}$${pnl.toFixed(2)}</td><td class="${fc(hp)}">${hp>=0?'+':''}$${hp.toFixed(2)}</td><td class="${fc(net)}">${net>=0?'+':''}$${net.toFixed(2)}</td></tr>`;}).join('');
+  drawPnL(F,K,T,r,s,legs,price); drawTheta(F,T,r,s,legs);
+  document.getElementById('p-scen').innerHTML=[-0.3,-0.2,-0.1,-0.05,0,0.05,0.1,0.2,0.3].map(mv=>{const nF=F*(1+mv); const newPrice=strategyPrice(nF,T,r,s,legs); const pnl=(newPrice-price)*n; const hp=-g.delta*(nF-F)*n; const net=pnl+hp; return`<tr><td class="${mv>0?'up':mv<0?'dn':'neu'}">${mv>0?'+':''}${(mv*100).toFixed(0)}%</td><td>$${f0(nF)}</td><td class="${fc(pnl)}">${pnl>=0?'+':''}$${pnl.toFixed(2)}</td><td class="${fc(hp)}">${hp>=0?'+':''}$${hp.toFixed(2)}</td><td class="${fc(net)}">${net>=0?'+':''}$${net.toFixed(2)}</td></tr>`;}).join('');
 }
-function drawPnL(F,K,T,r,s,type,price){const cv=document.getElementById('pnl-cv');if(!cv)return;const W=cv.offsetWidth||400,H=240;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const sp2=Array.from({length:80},(_,i)=>F*.6+i*F*.8/79);const pl=sp2.map(x=>(type==='call'?Math.max(0,x-K):Math.max(0,K-x))-price);const mn=Math.min(...pl),mx=Math.max(...pl);const p=28,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(sp2.length-1);ctx.strokeStyle='rgba(58,80,96,.8)';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(p,toY(0));ctx.lineTo(W-p,toY(0));ctx.stroke();const g2=ctx.createLinearGradient(0,0,0,H);g2.addColorStop(0,'rgba(48,208,144,.2)');g2.addColorStop(1,'rgba(224,80,96,.2)');ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.lineTo(toX(pl.length-1),H-p);ctx.lineTo(toX(0),H-p);ctx.closePath();ctx.fillStyle=g2;ctx.fill();ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#30d090';ctx.lineWidth=2;ctx.stroke();}
-function drawTheta(F,K,T,r,s,type){const cv=document.getElementById('tht-cv');if(!cv)return;const W=cv.offsetWidth||400,H=120;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const n=40,vs=Array.from({length:n},(_,i)=>b76(F,K,Math.max(T*(1-i/(n-1)),.001),r,s,type));const mn=Math.min(...vs),mx=Math.max(...vs);const p=20,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(n-1);ctx.strokeStyle='rgba(28,40,48,.7)';ctx.lineWidth=.5;[.25,.5,.75].forEach(t=>{const y=p+t*(H-2*p);ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(W-p,y);ctx.stroke();});ctx.beginPath();vs.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#b080f0';ctx.lineWidth=1.5;ctx.stroke();}
+function drawPnL(F,K,T,r,s,legs,price){const cv=document.getElementById('pnl-cv');if(!cv)return;const W=cv.offsetWidth||400,H=240;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const sp2=Array.from({length:80},(_,i)=>F*.6+i*F*.8/79);const pl=sp2.map(x=>strategyIntrinsic(x,legs)-price);const mn=Math.min(...pl),mx=Math.max(...pl);const p=28,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(sp2.length-1);ctx.strokeStyle='rgba(58,80,96,.8)';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(p,toY(0));ctx.lineTo(W-p,toY(0));ctx.stroke();const g2=ctx.createLinearGradient(0,0,0,H);g2.addColorStop(0,'rgba(48,208,144,.2)');g2.addColorStop(1,'rgba(224,80,96,.2)');ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.lineTo(toX(pl.length-1),H-p);ctx.lineTo(toX(0),H-p);ctx.closePath();ctx.fillStyle=g2;ctx.fill();ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#30d090';ctx.lineWidth=2;ctx.stroke();}
+function drawTheta(F,T,r,s,legs){const cv=document.getElementById('tht-cv');if(!cv)return;const W=cv.offsetWidth||400,H=120;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const n=40,vs=Array.from({length:n},(_,i)=>strategyPrice(F,Math.max(T*(1-i/(n-1)),.001),r,s,legs));const mn=Math.min(...vs),mx=Math.max(...vs);const p=20,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(n-1);ctx.strokeStyle='rgba(28,40,48,.7)';ctx.lineWidth=.5;[.25,.5,.75].forEach(t=>{const y=p+t*(H-2*p);ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(W-p,y);ctx.stroke();});ctx.beginPath();vs.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#b080f0';ctx.lineWidth=1.5;ctx.stroke();}
 
 // ═══════════════════════════════════════════════
 // VOL SURFACE
@@ -931,19 +967,20 @@ function buildFX() {
   }).join('');
 
   // Cross matrix from live data
-  const ccy = ['EUR','CNY','AUD','GBP'];
-  const rates = {};
+  const usdPer = { USD: 1 };
   FX_PAIRS.forEach(f => {
     const d = D[f.ticker]; if (!d) return;
-    const base = f.pair.split('/')[0];
-    rates[base] = f.pair.startsWith('USD/') ? 1/d.price : d.price;
+    const [base, quote] = f.pair.split('/');
+    if (base === 'USD' && d.price > 0) usdPer[quote] = 1 / d.price;
+    if (quote === 'USD' && d.price > 0) usdPer[base] = d.price;
   });
+  const ccy = Object.keys(usdPer).sort((a,b)=>a.localeCompare(b));
   let mx = `<div style="overflow-x:auto"><table><thead><tr><th></th>${ccy.map(c=>`<th style="text-align:center">${c}</th>`).join('')}</tr></thead><tbody>`;
   ccy.forEach(r2 => {
     mx += `<tr><td class="hl">${r2}</td>`;
     ccy.forEach(c => {
       if (r2 === c) { mx += `<td style="text-align:center;color:var(--text3)">1.0000</td>`; return; }
-      const cross = rates[c] && rates[r2] ? (rates[c]/rates[r2]).toFixed(4) : '—';
+      const cross = usdPer[c] && usdPer[r2] ? (usdPer[r2]/usdPer[c]).toFixed(4) : '—';
       mx += `<td style="text-align:center">${cross}</td>`;
     });
     mx += '</tr>';
@@ -1144,6 +1181,31 @@ function buildMacro() {
 let NEWS_RAW = [];
 let NEWS_FILTER = 'all';
 let NEWS_QUERY = '';
+const SPORT_NOISE_RE = /(fifa|soccer|football|nba|nfl|mlb|champions league|world cup|tennis|cricket|ufc|boxing|olympic)/i;
+function currentNewsItems(){
+  return NEWS_RAW.filter(n => {
+    const bucketOk = NEWS_FILTER === 'all' ? true : n.bucket === NEWS_FILTER;
+    const qOk = !NEWS_QUERY || (n.title || '').toLowerCase().includes(NEWS_QUERY) || (n.src || '').toLowerCase().includes(NEWS_QUERY);
+    return bucketOk && qOk;
+  });
+}
+function polymarketKeywordsFromHeadlines(){
+  const stop = new Set(['the','and','for','with','from','that','this','into','over','under','amid','after','before','into','into','will','would','could','should','says','say','new','more','than']);
+  const core = ['copper','aluminium','aluminum','nickel','zinc','lead','tin','metal','metals','lme','smelter','mine','mining','supply','demand','inventory','stockpile','inflation','fed','ecb','rates','dollar','usd','eur','cny','china','trade','tariff','gdp','pmi'];
+  const words = currentNewsItems()
+    .map(n => (n.title || '').toLowerCase().replace(/[^a-z0-9 ]/g,' '))
+    .join(' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 4 && !stop.has(w));
+  return Array.from(new Set([...core, ...words])).slice(0, 80);
+}
+function polymarketRelevanceScore(question, kws){
+  const q = (question || '').toLowerCase();
+  if (SPORT_NOISE_RE.test(q)) return -1;
+  let score = 0;
+  kws.forEach(k => { if (q.includes(k)) score += k.length > 6 ? 2 : 1; });
+  return score;
+}
 function detectNewsBucket(title){
   const t = (title || '').toLowerCase();
   if (/(usd|eur|fx|dollar|yen|gbp|aud|cny|forex)/.test(t)) return 'fx';
@@ -1211,28 +1273,7 @@ async function buildNews() {
   } catch(e) {
     setNewsItems([]);
   }
-  // Polymarket
-  try {
-    const r=await fetch('https://gamma-api.polymarket.com/markets?active=true&limit=30&order=volume24hr&ascending=false',{signal:AbortSignal.timeout(10000)});
-    const markets=await r.json(); if(!markets?.length) throw new Error('');
-    const kw=['fed','rate','copper','metal','china','inflation','recession','tariff','trade','dollar','gold','gdp','iran','oil','pboc','ecb','fomc','rba'];
-    const rel=markets.filter(m=>kw.some(k=>(m.question||'').toLowerCase().includes(k)));
-    const display=rel.length>2?rel.slice(0,10):markets.slice(0,10);
-    const polyEl=document.getElementById('poly-feed');
-    if(polyEl) polyEl.innerHTML=display.map(m=>{
-      const prob=m.outcomePrices?JSON.parse(m.outcomePrices)[0]:null;
-      const pct=prob?Math.round(parseFloat(prob)*100):null;
-      const vol=m.volume24hr?'$'+(parseFloat(m.volume24hr)/1000).toFixed(0)+'k vol':'';
-      const cls=pct>60?'up':pct<40?'dn':'am';
-      return`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-          ${pct!==null?`<span class="${cls}" style="font-size:14px;font-weight:600">${pct}%</span>`:'<span class="neu">—</span>'}
-          <span style="font-size:9px;color:#8a9ab0">${vol}</span>
-        </div>
-        <div style="font-size:11px;line-height:1.3">${m.question}</div>
-      </div>`;
-    }).join('');
-  } catch(e) {}
+  await buildPolymarket();
 }
 
 // ═══════════════════════════════════════════════
@@ -1439,14 +1480,22 @@ async function buildNewsLive(){
 // ═══ POLYMARKET ═══
 async function buildPolymarket(){
   try{
-    const r=await fetch('https://gamma-api.polymarket.com/markets?active=true&limit=20&order=volume24hr&ascending=false',{signal:AbortSignal.timeout(8000)});
+    const r=await fetch('https://gamma-api.polymarket.com/markets?active=true&limit=120&order=volume24hr&ascending=false',{signal:AbortSignal.timeout(9000)});
     const markets=await r.json(); if(!markets?.length) throw new Error('No markets');
-    const kw=['fed','rate','china','copper','metal','commodit','inflation','recession','tariff','trade','dollar','gold','gdp'];
-    const rel=markets.filter(m=>kw.some(k=>(m.question||'').toLowerCase().includes(k))).slice(0,8);
-    const display=rel.length>0?rel:markets.slice(0,8);
+    const kws = polymarketKeywordsFromHeadlines();
+    const rel = markets
+      .map(m => ({ m, score: polymarketRelevanceScore(m.question, kws) }))
+      .filter(x => x.score > 0)
+      .sort((a,b) => b.score - a.score)
+      .map(x => x.m);
+    const display=rel.slice(0,8);
     // #region agent log
-    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H5',location:'index.html:1263',message:'polymarket rows filtered',data:{total:markets.length,relevant:rel.length,display:display.length},timestamp:Date.now()})}).catch(()=>{});
+    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H5',location:'index.html:1263',message:'polymarket rows filtered',data:{total:markets.length,relevant:rel.length,display:display.length,kwCount:kws.length},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
+    if(!display.length){
+      document.getElementById('poly-feed').innerHTML=`<div style="color:#8a9ab0;font-size:11px">No prediction market currently matches visible headlines</div>`;
+      return;
+    }
     document.getElementById('poly-feed').innerHTML=display.map(m=>{
       const prob=m.outcomePrices?JSON.parse(m.outcomePrices)[0]:null;
       const pct=prob?Math.round(parseFloat(prob)*100):null;
