@@ -121,7 +121,6 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
   <div class="nv" id="nv-termstruct" onclick="showPage('termstruct')">Term Structure</div>
   <div style="width:1px;background:rgba(255,255,255,.12);margin:8px 4px"></div>
   <div class="nv" id="nv-pricer" onclick="showPage('pricer')">Option Pricer</div>
-  <div class="nv" id="nv-vol" onclick="showPage('vol')">Vol Surface</div>
   <div style="width:1px;background:rgba(255,255,255,.12);margin:8px 4px"></div>
   <div class="nv" id="nv-fx" onclick="showPage('fx')">FX Rates</div>
   <div class="nv" id="nv-hedge" onclick="showPage('hedge')">Hedge Calc</div>
@@ -145,7 +144,6 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
       </div>
       <div class="g3">
         <div class="pn"><div class="ph"><span class="pt">FX Snapshot</span></div><div class="pb"><div id="ov-fx"><span class="sp2"></span>Loading…</div></div></div>
-        <div class="pn"><div class="ph"><span class="pt">Market Signals</span></div><div class="pb"><div id="ov-sig"><span class="sp2"></span>Loading…</div></div></div>
         <div class="pn"><div class="ph"><span class="pt">Data Info</span></div><div class="pb">
           <div class="rr"><span class="rl">Metals source</span><span class="rv hl">Yahoo Finance</span></div>
           <div class="rr"><span class="rl">Delay</span><span class="rv am">15–20 min</span></div>
@@ -236,24 +234,6 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
         </div>
         <div class="pn"><div class="ph"><span class="pt">P&L at Expiry</span></div>
           <div class="pb"><canvas id="pnl-cv" height="240"></canvas><div class="dl"></div><div style="font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:10px">THETA DECAY</div><canvas id="tht-cv" height="120"></canvas></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="pg" id="page-vol">
-      <div class="sh"><div class="st">Vol Surface</div><div class="ss">IMPLIED VOL — MODELED FROM LIVE SPOT</div></div>
-      <div class="g2" style="margin-bottom:12px">
-        <div class="pn">
-          <div class="ph"><span class="pt">IV Surface — <span id="vt">—</span></span>
-            <select id="v-sel" style="width:140px" onchange="buildVol()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select>
-          </div>
-          <div class="pb"><div id="v-surf"><span class="sp2"></span>Loading…</div></div>
-        </div>
-        <div class="pn"><div class="ph"><span class="pt">Term Structure</span></div>
-          <div class="pb"><canvas id="v-tc" height="180"></canvas><div class="dl"></div>
-            <div style="font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:8px">SKEW & RISK REVERSALS</div>
-            <div class="tw"><table><thead><tr><th>METAL</th><th>ATM 3M</th><th>25Δ RR</th><th>25Δ BF</th><th>SKEW</th></tr></thead><tbody id="sk-tbl"></tbody></table></div>
-          </div>
         </div>
       </div>
     </div>
@@ -618,12 +598,11 @@ function updateAll() {
 }
 
 function refPage(id) {
-  if (id === 'ov')         { updOvKpis(); updOvTable(); updOvFX(); updOvSig(); drawOvBars(); }
+  if (id === 'ov')         { updOvKpis(); updOvTable(); updOvFX(); drawOvBars(); }
   if (id === 'spot')       buildSpot();
   if (id === 'fwd')        drawFwd();
   if (id === 'termstruct') buildTS();
   if (id === 'pricer')     syncSpot();
-  if (id === 'vol')        buildVol();
   if (id === 'fx')         buildFX();
   if (id === 'hedge')      calcH();
   if (id === 'macro')      buildMacro();
@@ -710,18 +689,6 @@ function updOvFX() {
       <span style="color:var(--a2)">${f.pair}</span>
       <span class="hl">${f4(d.price)}</span>
       <span class="bg ${d.change >= 0 ? 'bgu' : 'bgd'}">${fp(d.pct)}</span>
-    </div>`;
-  }).join('');
-}
-
-function updOvSig() {
-  document.getElementById('ov-sig').innerHTML = Object.entries(METALS).map(([k,m]) => {
-    const d = metalData(k); const pct = d?.pct || 0;
-    const s = pct > 1 ? 'BULLISH' : pct < -1 ? 'BEARISH' : 'NEUTRAL';
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
-      <span style="color:${m.col}">${k}</span>
-      <span class="sg ${s==='BULLISH'?'slo':s==='BEARISH'?'ssh':'sne'}">${s}</span>
-      <span style="font-size:10px;color:var(--text2)">${d ? fp(d.pct) : '—'}</span>
     </div>`;
   }).join('');
 }
@@ -928,35 +895,6 @@ function calcOpt() {
 }
 function drawPnL(F,K,T,r,s,legs,price){const cv=document.getElementById('pnl-cv');if(!cv)return;const W=cv.offsetWidth||400,H=240;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const sp2=Array.from({length:80},(_,i)=>F*.6+i*F*.8/79);const pl=sp2.map(x=>strategyIntrinsic(x,legs)-price);const mn=Math.min(...pl),mx=Math.max(...pl);const p=28,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(sp2.length-1);ctx.strokeStyle='rgba(58,80,96,.8)';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(p,toY(0));ctx.lineTo(W-p,toY(0));ctx.stroke();const g2=ctx.createLinearGradient(0,0,0,H);g2.addColorStop(0,'rgba(48,208,144,.2)');g2.addColorStop(1,'rgba(224,80,96,.2)');ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.lineTo(toX(pl.length-1),H-p);ctx.lineTo(toX(0),H-p);ctx.closePath();ctx.fillStyle=g2;ctx.fill();ctx.beginPath();pl.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#30d090';ctx.lineWidth=2;ctx.stroke();}
 function drawTheta(F,T,r,s,legs){const cv=document.getElementById('tht-cv');if(!cv)return;const W=cv.offsetWidth||400,H=120;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);const n=40,vs=Array.from({length:n},(_,i)=>strategyPrice(F,Math.max(T*(1-i/(n-1)),.001),r,s,legs));const mn=Math.min(...vs),mx=Math.max(...vs);const p=20,toY=v=>H-p-(v-mn)/(mx-mn+.001)*(H-2*p),toX=i=>p+i*(W-2*p)/(n-1);ctx.strokeStyle='rgba(28,40,48,.7)';ctx.lineWidth=.5;[.25,.5,.75].forEach(t=>{const y=p+t*(H-2*p);ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(W-p,y);ctx.stroke();});ctx.beginPath();vs.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle='#b080f0';ctx.lineWidth=1.5;ctx.stroke();}
-
-// ═══════════════════════════════════════════════
-// VOL SURFACE
-// ═══════════════════════════════════════════════
-function buildVol() {
-  const k = document.getElementById('v-sel').value, m = METALS[k];
-  document.getElementById('vt').textContent = m.name;
-  const sp = metalPrice(k);
-  const vol = m.volBase;
-  const tenors=['1W','1M','2M','3M','6M','9M','12M','18M','24M'];
-  const ts=[1.28,1.14,1.07,1.0,.95,.93,.92,.91,.90];
-  const sk=[-4.2,-2.1,0,1.1,2.3];
-  const dl=['10D Put','25D Put','ATM','25D Call','10D Call'];
-  let h=`<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;font-size:9px;color:var(--text3);padding:4px">TENOR\\Δ</th>${dl.map(d=>`<th style="font-size:9px;color:var(--text3);padding:4px;text-align:center">${d}</th>`).join('')}</tr></thead><tbody>`;
-  tenors.forEach((t,ti)=>{h+=`<tr><td style="font-size:10px;color:var(--text2);padding:4px">${t}</td>`;dl.forEach((_,di)=>{const v=(vol*ts[ti]+sk[di]*(1-ti/12));const ht=Math.min(1,Math.max(0,(v-vol*.8)/(vol*.6)));const r=Math.round(10+ht*220),g2=Math.round(180-ht*140),b=Math.round(80-ht*50);h+=`<td style="padding:3px;text-align:center"><span class="vc" style="background:rgba(${r},${g2},${b},.18);color:rgb(${r},${g2},${b})">${v.toFixed(1)}%</span></td>`;});h+='</tr>';});
-  h+='</tbody></table></div>';
-  document.getElementById('v-surf').innerHTML = h;
-
-  const cv=document.getElementById('v-tc');if(!cv)return;const W=cv.offsetWidth||400,H=180;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);
-  const vols=ts.map(t=>vol*t);const mn=Math.min(...vols)*.97,mx=Math.max(...vols)*1.03;const p=30,toY=v=>H-p-(v-mn)/(mx-mn)*(H-2*p),toX=i=>p+i*(W-2*p)/(vols.length-1);
-  ctx.strokeStyle='rgba(28,40,48,.7)';ctx.lineWidth=.5;[0,.25,.5,.75,1].forEach(t=>{const y=p+t*(H-2*p);ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(W-p,y);ctx.stroke();const v2=mn+(1-t)*(mx-mn);ctx.fillStyle='#3a5060';ctx.font='9px IBM Plex Mono';ctx.textAlign='right';ctx.fillText(v2.toFixed(1)+'%',p-2,y+3);});
-  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,m.col+'30');g.addColorStop(1,m.col+'05');ctx.beginPath();vols.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.lineTo(toX(vols.length-1),H-p);ctx.lineTo(toX(0),H-p);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.beginPath();vols.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));ctx.strokeStyle=m.col;ctx.lineWidth=2;ctx.stroke();vols.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),3,0,Math.PI*2);ctx.fillStyle=m.col;ctx.fill();});
-  ['1W','1M','2M','3M','6M','9M','12M','18M','24M'].forEach((l,i)=>{ctx.fillStyle='#3a5060';ctx.font='9px IBM Plex Mono';ctx.textAlign='center';ctx.fillText(l,toX(i),H-4);});
-
-  document.getElementById('sk-tbl').innerHTML=Object.entries(METALS).map(([k2,m2])=>{
-    const rr=((Math.random()-.5)*3).toFixed(2),bf=(Math.random()*1.5).toFixed(2);
-    return`<tr><td style="color:${m2.col}">${k2}</td><td class="am">${m2.volBase}%</td><td class="${rr>0?'up':'dn'}">${rr>0?'+':''}${rr}v</td><td class="pu">${bf}v</td><td class="${rr<0?'dn':'up'}">${rr<0?'NEG':'POS'}</td></tr>`;
-  }).join('');
-}
 
 // ═══════════════════════════════════════════════
 // FX PAGE
