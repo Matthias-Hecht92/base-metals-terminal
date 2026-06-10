@@ -208,7 +208,7 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
             <div class="pb">
               <div class="fr">
                 <div><div class="fl">Metal</div><select id="p-met" onchange="syncSpot()"><option value="Cu">Copper</option><option value="Al">Aluminium</option><option value="Ni">Nickel</option><option value="Zn">Zinc</option><option value="Pb">Lead</option><option value="Sn">Tin</option></select></div>
-                <div><div class="fl">Strategy</div><select id="p-typ" onchange="calcOpt()"><option value="call">CALL</option><option value="put">PUT</option><option value="straddle">STRADDLE</option><option value="strangle">STRANGLE</option><option value="callspread">CALL SPREAD</option><option value="zcollar">ZERO COST COLLAR</option><option value="putspread">PUT SPREAD</option><option value="butterfly">BUTTERFLY</option></select></div>
+                <div><div class="fl">Strategy</div><select id="p-typ" onchange="calcOpt()"><option value="call">CALL</option><option value="put">PUT</option><option value="straddle">STRADDLE</option><option value="strangle">STRANGLE</option><option value="callspread">CALL SPREAD</option><option value="zcollar">COLLAR (UNDERLYING HELD)</option><option value="putspread">PUT SPREAD</option><option value="butterfly">BUTTERFLY</option></select></div>
               </div>
               <div class="fr">
                 <div><div class="fl">Futures F (USD/t)</div><input type="number" id="p-F" oninput="calcOpt()"></div>
@@ -861,21 +861,6 @@ function N(x){const t=1/(1+.2316419*Math.abs(x));const p=t*(.31938153+t*(-.35656
 function b76(F,K,T,r,s,type){if(T<=0)return type==='call'?Math.max(0,F-K):Math.max(0,K-F);const d1=(Math.log(F/K)+(s*s/2)*T)/(s*Math.sqrt(T)),d2=d1-s*Math.sqrt(T),df=Math.exp(-r*T);return type==='call'?df*(F*N(d1)-K*N(d2)):df*(K*N(-d2)-F*N(-d1));}
 function gr(F,K,T,r,s,type){const h=F*.001,p0=b76(F,K,T,r,s,type);return{delta:(b76(F+h,K,T,r,s,type)-b76(F-h,K,T,r,s,type))/(2*h),gamma:(b76(F+h,K,T,r,s,type)-2*p0+b76(F-h,K,T,r,s,type))/(h*h),vega:(b76(F,K,T,r,s+.0001,type)-p0)/.0001/100,theta:T>.01?b76(F,K,T-1/365,r,s,type)-p0:0,rho:(b76(F,K,T,r+.0001,s,type)-p0)/.0001/100};}
 function mkLeg(type,sign,K){return{type,sign,K};}
-function findZeroCostCallStrike(F,T,r,s,kPut){
-  const putPrem = b76(F,kPut,T,r,s,'put');
-  let lo = Math.max(0.0001, F * 0.8);
-  let hi = Math.max(lo + 0.0001, F * 1.8);
-  const f = (k) => b76(F,k,T,r,s,'call') - putPrem;
-  // Ensure bracket: call premium decreases with higher strike.
-  for(let i=0;i<20 && f(lo) < 0;i++) lo *= 0.9;
-  for(let i=0;i<20 && f(hi) > 0;i++) hi *= 1.1;
-  if (!(f(lo) >= 0 && f(hi) <= 0)) return F * 1.05;
-  for(let i=0;i<60;i++){
-    const mid = (lo + hi) / 2;
-    if (f(mid) > 0) lo = mid; else hi = mid;
-  }
-  return (lo + hi) / 2;
-}
 function strategyLegs(F,K,wPct,strat,T,r,s){
   const w=Math.max(0.005,(wPct||5)/100);
   const kDn=Math.max(0.0001,K*(1-w));
@@ -886,24 +871,22 @@ function strategyLegs(F,K,wPct,strat,T,r,s){
   if(strat==='strangle') return [mkLeg('put',1,kDn),mkLeg('call',1,kUp)];
   if(strat==='callspread') return [mkLeg('call',1,K),mkLeg('call',-1,kUp)];
   if(strat==='putspread') return [mkLeg('put',1,K),mkLeg('put',-1,kDn)];
-  if(strat==='zcollar') {
-    const kCall = findZeroCostCallStrike(F,T,r,s,kDn);
-    return [mkLeg('put',1,kDn),mkLeg('call',-1,kCall)];
-  }
+  if(strat==='zcollar') return [mkLeg('underlying',1,F),mkLeg('put',1,kDn),mkLeg('call',-1,kUp)];
   if(strat==='butterfly') return [mkLeg('call',1,kDn),mkLeg('call',-2,K),mkLeg('call',1,kUp)];
   return [mkLeg('call',1,K)];
 }
-function strategyPrice(F,T,r,s,legs){return legs.reduce((acc,l)=>acc+l.sign*b76(F,l.K,T,r,s,l.type),0);}
+function strategyPrice(F,T,r,s,legs){return legs.reduce((acc,l)=>acc+(l.type==='underlying'?l.sign*(F-l.K):l.sign*b76(F,l.K,T,r,s,l.type)),0);}
 function strategyGreeks(F,T,r,s,legs){
   return legs.reduce((acc,l)=>{
+    if(l.type==='underlying'){acc.delta+=l.sign;return acc;}
     const g=gr(F,l.K,T,r,s,l.type);
     acc.delta+=l.sign*g.delta;acc.gamma+=l.sign*g.gamma;acc.vega+=l.sign*g.vega;acc.theta+=l.sign*g.theta;acc.rho+=l.sign*g.rho;
     return acc;
   },{delta:0,gamma:0,vega:0,theta:0,rho:0});
 }
-function strategyIntrinsic(F,legs){return legs.reduce((acc,l)=>acc+l.sign*(l.type==='call'?Math.max(0,F-l.K):Math.max(0,l.K-F)),0);}
+function strategyIntrinsic(F,legs){return legs.reduce((acc,l)=>acc+(l.type==='underlying'?l.sign*(F-l.K):l.sign*(l.type==='call'?Math.max(0,F-l.K):Math.max(0,l.K-F))),0);}
 function strategyLabel(strat){
-  return {call:'Call',put:'Put',straddle:'Straddle',strangle:'Strangle',callspread:'Call Spread',putspread:'Put Spread',zcollar:'Zero Cost Collar',butterfly:'Butterfly'}[strat]||'Strategy';
+  return {call:'Call',put:'Put',straddle:'Straddle',strangle:'Strangle',callspread:'Call Spread',putspread:'Put Spread',zcollar:'Covered Collar',butterfly:'Butterfly'}[strat]||'Strategy';
 }
 
 function syncSpot() {
