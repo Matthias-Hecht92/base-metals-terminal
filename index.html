@@ -704,7 +704,7 @@ function updOvTable() {
 
 function updOvFX() {
   document.getElementById('ov-fx').innerHTML = FX_PAIRS.map(f => {
-    const d = D[f.ticker];
+    const d = fxData(f.pair);
     if (!d) return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--a2)">${f.pair}</span><span class="neu">—</span></div>`;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
       <span style="color:var(--a2)">${f.pair}</span>
@@ -775,7 +775,7 @@ function buildSpot() {
   document.getElementById('sp-tbl').innerHTML = h;
 
   document.getElementById('sp-fx').innerHTML = FX_PAIRS.map(f => {
-    const d = D[f.ticker];
+    const d = fxData(f.pair);
     if (!d) return `<tr><td class="hl">${f.pair}</td><td colspan="5" class="neu">Loading…</td></tr>`;
     return `<tr><td class="hl">${f.pair}</td><td>${f4(d.price)}</td>
       <td class="${fc(d.change)}">${d.change >= 0 ? '+' : ''}${f4(d.change)}</td>
@@ -792,7 +792,7 @@ function drawRelPerf() {
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
   const items = [
     ...Object.entries(METALS).map(([k,m]) => ({ l:k, c:metalData(k)?.pct||0, col:m.col })),
-    ...FX_PAIRS.slice(0,3).map(f => ({ l:f.pair.replace('/USD','').replace('USD/',''), c:D[f.ticker]?.pct||0, col:'#00c8a0' }))
+    ...FX_PAIRS.slice(0,3).map(f => ({ l:f.pair.replace('/USD','').replace('USD/',''), c:fxData(f.pair)?.pct||0, col:'#00c8a0' }))
   ];
   const bW = (W-40)/items.length*.7, gap = (W-40-bW*items.length)/(items.length+1);
   const mY = H * .55;
@@ -964,13 +964,13 @@ function buildFX() {
   document.getElementById('fx-stamp').textContent = lastFetch ? fmtParisTime(lastFetch) + ' PARIS' : '—';
 
   document.getElementById('fx-kpis').innerHTML = FX_PAIRS.slice(0,4).map(f => {
-    const d = D[f.ticker];
+    const d = fxData(f.pair);
     if (!d) return `<div class="kp"><div class="kl">${f.pair}</div><div class="kv"><span class="sp2"></span></div></div>`;
     return `<div class="kp"><div class="kl">${f.pair}</div><div class="kv ${fc(d.change)}">${f4(d.price)}</div><div class="ks ${fc(d.change)}">${d.change>=0?'▲ +':'▼ '}${Math.abs(d.pct).toFixed(2)}%</div></div>`;
   }).join('');
 
   document.getElementById('fx-tbl').innerHTML = FX_PAIRS.map(f => {
-    const d = D[f.ticker];
+    const d = fxData(f.pair);
     if (!d) return `<tr><td class="hl">${f.pair}</td><td colspan="8" class="neu">Loading…</td></tr>`;
     const fwd = d.price * (1 + 0.005 * 0.25);
     const sc = ((fwd/d.price-1)*4*100).toFixed(3);
