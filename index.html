@@ -105,7 +105,7 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
     <span class="tb">Ni <span class="tbv" id="tb-ni">—</span></span>
     <div style="width:1px;height:14px;background:#dde8f2"></div>
     <span class="tb">EUR/USD <span class="tbv" id="tb-fx">—</span></span>
-    <span class="tb" id="tb-clk" style="color:#8a9ab0;font-family:var(--fm)">--:--:-- UTC</span>
+    <span class="tb" id="tb-clk" style="color:#8a9ab0;font-family:var(--fm)">--:--:-- PARIS</span>
   </div>
 </div>
 <div id="ds">
@@ -535,7 +535,7 @@ async function fetchAll() {
       fetchOk = true;
       lastFetch = new Date();
       setSt('live');
-      document.getElementById('ds-last').textContent = lastFetch.toUTCString().split(' ')[4] + ' UTC';
+      document.getElementById('ds-last').textContent = fmtParisTime(lastFetch) + ' PARIS';
     } else {
       throw new Error('No quotes returned');
     }
@@ -561,6 +561,7 @@ const f2  = n => n == null || isNaN(n) ? '—' : n.toFixed(2);
 const f4  = n => n == null || isNaN(n) ? '—' : n.toFixed(4);
 const fp  = n => n == null || isNaN(n) ? '—' : (n > 0 ? '+' : '') + n.toFixed(2) + '%';
 const fc  = n => n == null ? 'neu' : n > 0 ? 'up' : n < 0 ? 'dn' : 'neu';
+const fmtParisTime = (d) => new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(d || new Date());
 
 function metalPrice(k) {
   const d = D[METALS[k].ticker];
@@ -582,7 +583,7 @@ function setSt(s) {
 // CLOCK & AUTO-REFRESH
 // ═══════════════════════════════════════════════
 setInterval(() => {
-  document.getElementById('tb-clk').textContent = new Date().toUTCString().split(' ')[4] + ' UTC';
+  document.getElementById('tb-clk').textContent = fmtParisTime(new Date()) + ' PARIS';
   countdown--;
   if (countdown <= 0) { countdown = 60; fetchAll(); }
   document.getElementById('ds-next').textContent = countdown + 's';
@@ -663,7 +664,7 @@ function updOvKpis() {
 }
 
 function updOvTable() {
-  document.getElementById('ov-stamp').textContent = lastFetch ? lastFetch.toUTCString().split(' ')[4] + ' UTC' : '—';
+  document.getElementById('ov-stamp').textContent = lastFetch ? fmtParisTime(lastFetch) + ' PARIS' : '—';
   let h = '';
   Object.entries(METALS).forEach(([k,m]) => {
     const p = metalPrice(k); const d = metalData(k);
@@ -732,7 +733,7 @@ function drawOvBars() {
 // SPOT PAGE
 // ═══════════════════════════════════════════════
 function buildSpot() {
-  document.getElementById('sp-stamp').textContent = lastFetch ? lastFetch.toUTCString().split(' ')[4] + ' UTC' : '—';
+  document.getElementById('sp-stamp').textContent = lastFetch ? fmtParisTime(lastFetch) + ' PARIS' : '—';
   let h = '';
   Object.entries(METALS).forEach(([k,m]) => {
     const d = metalData(k); const p = metalPrice(k);
@@ -941,7 +942,7 @@ function buildVol() {
 // FX PAGE
 // ═══════════════════════════════════════════════
 function buildFX() {
-  document.getElementById('fx-stamp').textContent = lastFetch ? lastFetch.toUTCString().split(' ')[4] + ' UTC' : '—';
+  document.getElementById('fx-stamp').textContent = lastFetch ? fmtParisTime(lastFetch) + ' PARIS' : '—';
 
   document.getElementById('fx-kpis').innerHTML = FX_PAIRS.slice(0,4).map(f => {
     const d = D[f.ticker];
@@ -1325,7 +1326,7 @@ function tsCurveFactors(k){
 }
 
 function buildTS(){
-  document.getElementById('ts-stamp').textContent=lastFetch?lastFetch.toUTCString().split(' ')[4]+' UTC':'—';
+  document.getElementById('ts-stamp').textContent=lastFetch?fmtParisTime(lastFetch)+' PARIS':'—';
   let html='';
   const tsDebugRows=[];
   const dataMode = 'blended';
