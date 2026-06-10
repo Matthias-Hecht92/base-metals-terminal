@@ -861,7 +861,22 @@ function N(x){const t=1/(1+.2316419*Math.abs(x));const p=t*(.31938153+t*(-.35656
 function b76(F,K,T,r,s,type){if(T<=0)return type==='call'?Math.max(0,F-K):Math.max(0,K-F);const d1=(Math.log(F/K)+(s*s/2)*T)/(s*Math.sqrt(T)),d2=d1-s*Math.sqrt(T),df=Math.exp(-r*T);return type==='call'?df*(F*N(d1)-K*N(d2)):df*(K*N(-d2)-F*N(-d1));}
 function gr(F,K,T,r,s,type){const h=F*.001,p0=b76(F,K,T,r,s,type);return{delta:(b76(F+h,K,T,r,s,type)-b76(F-h,K,T,r,s,type))/(2*h),gamma:(b76(F+h,K,T,r,s,type)-2*p0+b76(F-h,K,T,r,s,type))/(h*h),vega:(b76(F,K,T,r,s+.0001,type)-p0)/.0001/100,theta:T>.01?b76(F,K,T-1/365,r,s,type)-p0:0,rho:(b76(F,K,T,r+.0001,s,type)-p0)/.0001/100};}
 function mkLeg(type,sign,K){return{type,sign,K};}
-function strategyLegs(F,K,wPct,strat){
+function findZeroCostCallStrike(F,T,r,s,kPut){
+  const putPrem = b76(F,kPut,T,r,s,'put');
+  let lo = Math.max(0.0001, F * 0.8);
+  let hi = Math.max(lo + 0.0001, F * 1.8);
+  const f = (k) => b76(F,k,T,r,s,'call') - putPrem;
+  // Ensure bracket: call premium decreases with higher strike.
+  for(let i=0;i<20 && f(lo) < 0;i++) lo *= 0.9;
+  for(let i=0;i<20 && f(hi) > 0;i++) hi *= 1.1;
+  if (!(f(lo) >= 0 && f(hi) <= 0)) return F * 1.05;
+  for(let i=0;i<60;i++){
+    const mid = (lo + hi) / 2;
+    if (f(mid) > 0) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+function strategyLegs(F,K,wPct,strat,T,r,s){
   const w=Math.max(0.005,(wPct||5)/100);
   const kDn=Math.max(0.0001,K*(1-w));
   const kUp=K*(1+w);
@@ -871,7 +886,10 @@ function strategyLegs(F,K,wPct,strat){
   if(strat==='strangle') return [mkLeg('put',1,kDn),mkLeg('call',1,kUp)];
   if(strat==='callspread') return [mkLeg('call',1,K),mkLeg('call',-1,kUp)];
   if(strat==='putspread') return [mkLeg('put',1,K),mkLeg('put',-1,kDn)];
-  if(strat==='zcollar') return [mkLeg('put',1,kDn),mkLeg('call',-1,kUp)];
+  if(strat==='zcollar') {
+    const kCall = findZeroCostCallStrike(F,T,r,s,kDn);
+    return [mkLeg('put',1,kDn),mkLeg('call',-1,kCall)];
+  }
   if(strat==='butterfly') return [mkLeg('call',1,kDn),mkLeg('call',-2,K),mkLeg('call',1,kUp)];
   return [mkLeg('call',1,K)];
 }
@@ -909,7 +927,7 @@ function calcOpt() {
   const w=+document.getElementById('p-w').value||5;
   const n=Math.max(1,+document.getElementById('p-n').value||1);
   if(!F||!K||!T||!s){document.getElementById('p-res').innerHTML='<span style="color:var(--text3)">Fill in all parameters</span>';return;}
-  const legs=strategyLegs(F,K,w,type);
+  const legs=strategyLegs(F,K,w,type,T,r,s);
   const price=strategyPrice(F,T,r,s,legs);
   const g=strategyGreeks(F,T,r,s,legs);
   const intr=strategyIntrinsic(F,legs);
