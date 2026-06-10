@@ -570,7 +570,26 @@ function metalPrice(k) {
 }
 function metalData(k)  { return D[METALS[k].ticker] || null; }
 function fxRate(pair)  { return FX_PAIRS.find(f => f.pair === pair); }
-function fxData(pair)  { const f = fxRate(pair); return f ? D[f.ticker] : null; }
+function fxData(pair)  {
+  const f = fxRate(pair); if (!f) return null;
+  const d = D[f.ticker]; if (!d) return null;
+  if (!f.inv) return d;
+  const inv = (v) => (v != null && isFinite(v) && v !== 0) ? (1 / v) : null;
+  const price = inv(d.price);
+  const prev = inv(d.prev);
+  const high = inv(d.low); // inverted bounds
+  const low = inv(d.high);
+  let change = null, pct = null;
+  if (price != null && prev != null) {
+    change = price - prev;
+    pct = prev !== 0 ? (change / prev) * 100 : null;
+  } else if (d.pct != null && price != null) {
+    // Fallback approximation when previous close is missing.
+    pct = -d.pct;
+    change = price * (pct / 100);
+  }
+  return { ...d, price, prev, high, low, change, pct, pctSource: (d.pctSource || 'api') + '_inverted' };
+}
 function fxPrice(pair) { const d = fxData(pair); return d ? d.price : null; }
 
 function setSt(s) {
@@ -970,7 +989,7 @@ function buildFX() {
   // Cross matrix from live data
   const usdPer = { USD: 1 };
   FX_PAIRS.forEach(f => {
-    const d = D[f.ticker]; if (!d) return;
+    const d = fxData(f.pair); if (!d || !d.price) return;
     const [base, quote] = f.pair.split('/');
     if (base === 'USD' && d.price > 0) usdPer[quote] = 1 / d.price;
     if (quote === 'USD' && d.price > 0) usdPer[base] = d.price;
