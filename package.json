@@ -1,0 +1,13 @@
+{
+  "name": "base-metals-terminal",
+  "version": "1.0.0",
+  "description": "Base Metals & FX Terminal for Metal Trading SAS",
+  "private": true,
+  "scripts": {
+    "dev": "node local-server.js",
+    "start": "node local-server.js"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.1.1"
+  }
+}
