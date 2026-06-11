@@ -699,19 +699,28 @@ function drawOvBars() {
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
   const keys = Object.keys(METALS);
   const chgs = keys.map(k => metalData(k)?.pct || 0);
-  const bW = Math.min(55, (W-40)/keys.length*.65), gap = (W-40-bW*keys.length)/(keys.length+1);
-  const mY = H * .55;
+  const pad = { l: 20, r: 20, t: 14, b: 36 };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+  const bW = Math.min(55, plotW/keys.length*.65), gap = (plotW-bW*keys.length)/(keys.length+1);
+  const mY = pad.t + plotH * .5;
+  const maxAbs = Math.max(0.5, ...chgs.map(v => Math.abs(v)));
   ctx.strokeStyle = 'rgba(28,40,48,.8)'; ctx.lineWidth = .5;
-  ctx.beginPath(); ctx.moveTo(20, mY); ctx.lineTo(W-20, mY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l, mY); ctx.lineTo(W-pad.r, mY); ctx.stroke();
   keys.forEach((k, i) => {
-    const x = 20+gap+i*(bW+gap), c = chgs[i], bH = Math.abs(c)/4*mY*.9, y = c >= 0 ? mY-bH : mY;
+    const x = pad.l + gap + i*(bW+gap);
+    const c = chgs[i];
+    const bH = (Math.abs(c) / maxAbs) * (plotH * .45);
+    const y = c >= 0 ? mY-bH : mY;
     const col = METALS[k].col;
     ctx.fillStyle = col + '40'; ctx.fillRect(x, y, bW, bH);
     ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.strokeRect(x, y, bW, bH);
+    const pctTxt = (c >= 0 ? '+' : '') + c.toFixed(2) + '%';
     ctx.fillStyle = col; ctx.font = '10px IBM Plex Mono'; ctx.textAlign = 'center';
-    ctx.fillText(k, x+bW/2, H-6);
+    ctx.fillText(k, x+bW/2, H-5);
     ctx.fillStyle = c >= 0 ? '#30d090' : '#e05060';
-    ctx.fillText((c >= 0 ? '+' : '') + c.toFixed(2) + '%', x+bW/2, c >= 0 ? y-4 : y+bH+12);
+    const pctY = c >= 0 ? Math.max(pad.t + 9, y - 5) : H - 18;
+    ctx.fillText(pctTxt, x+bW/2, pctY);
   });
 }
 
