@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": null,
+  "devCommand": "node local-server.js",
+  "installCommand": "npm install"
+}
