@@ -9,17 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f4f7fb;--bg1:#ffffff;--bg2:#f0f5fa;--border:#dde8f2;--border2:#b8cfe6;
-  --text:#1a3a5c;--text2:#4a6a8a;--text3:#8a9ab0;
-  --accent:#2e6ea6;--a2:#1a3a5c;--warn:#e07b00;--danger:#c62828;
+  --bg:#f3f4f6;--bg1:#ffffff;--bg2:#f7f7f8;--border:#e4e6ea;--border2:#c9ced6;
+  --text:#171717;--text2:#3f4650;--text3:#7a8089;
+  --accent:#ff8300;--a2:#171717;--warn:#ff8300;--danger:#c62828;
   --up:#1b5e20;--dn:#c62828;
-  --cu:#1a3a5c;--al:#2e6ea6;--ni:#4a8fc0;--zn:#6aaed4;--pb:#5a9abf;--sn:#7ab0cf;
-  --mts:#1a3a5c;--mts2:#2e6ea6;--mts3:#4a8fc0;
+  --cu:#7a4b16;--al:#3f4650;--ni:#59606b;--zn:#6f7681;--pb:#868d97;--sn:#9aa1ab;
+  --mts:#171717;--mts2:#ff8300;--mts3:#4b515b;
   --fm:'IBM Plex Mono',monospace;--fs:'Inter',sans-serif
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:var(--fs);font-size:12px;line-height:1.5;overflow-x:hidden}
-#topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:54px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(26,58,92,.06)}
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:54px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(0,0,0,.06)}
 .logo{font-size:13px;font-weight:600;color:var(--mts)}.logo span{color:var(--text2)}
 .tr{display:flex;align-items:center;gap:14px}
 .ld{width:7px;height:7px;border-radius:50%;background:#2e7d32;display:inline-block;margin-right:5px;animation:bl 2s infinite}
@@ -30,7 +30,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fs);font-size:12px
 #navbar::-webkit-scrollbar{height:0}
 .nv{padding:0 14px;height:36px;display:flex;align-items:center;cursor:pointer;color:rgba(255,255,255,.5);font-size:11px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;user-select:none}
 .nv:hover{color:rgba(255,255,255,.85)}.nv.act{color:#fff;border-bottom-color:#fff;font-weight:500}
-#ds{background:var(--bg2);border-bottom:1px solid var(--border);padding:3px 20px;display:flex;align-items:center;gap:16px;font-size:10px;color:var(--text3);font-family:var(--fm)}
+#ds{background:#fff;border-bottom:1px solid var(--border);padding:3px 20px;display:flex;align-items:center;gap:16px;font-size:10px;color:var(--text3);font-family:var(--fm)}
 #ds span{color:var(--text2)}
 #layout{display:block;height:calc(100vh - 93px);overflow:hidden}
 #sb{display:none!important}
@@ -53,12 +53,12 @@ tr:hover td{background:#f5f9ff}tr:last-child td{border-bottom:none}
 .up{color:#1b5e20;font-weight:500}.dn{color:#c62828;font-weight:500}.neu{color:var(--text2)}.hl{color:var(--mts2);font-weight:500}.am{color:var(--warn)}.pu{color:#6a1b9a}
 .bg{display:inline-block;padding:2px 7px;border-radius:2px;font-size:9px;font-family:var(--fm)}
 .bgu{background:#e8f5e9;color:#1b5e20;border:1px solid #c8e6c9}.bgd{background:#fde8e8;color:#c62828;border:1px solid #ffcdd2}
-.bgn{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}.bga{background:#fff8e1;color:var(--warn);border:1px solid #ffe082}
+.bgn{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}.bga{background:#fff3e6;color:var(--warn);border:1px solid #ffd4a6}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .fl{font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;font-family:var(--fm)}
 input[type=number],select{width:100%;background:#fff;border:1px solid var(--border2);color:var(--text);padding:6px 10px;font-family:var(--fm);font-size:11px;border-radius:3px;outline:none;-moz-appearance:textfield}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
-input:focus,select:focus{border-color:var(--mts2);box-shadow:0 0 0 2px rgba(46,110,166,.12)}
+input:focus,select:focus{border-color:var(--mts2);box-shadow:0 0 0 2px rgba(255,131,0,.18)}
 select option{background:#fff;color:var(--text)}
 .rb{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:10px 12px;margin-top:10px}
 .rr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}.rr:last-child{border-bottom:none}
@@ -80,7 +80,7 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
 .slo{background:#e8f5e9;color:#1b5e20}.ssh{background:#fde8e8;color:#c62828}.sne{background:var(--bg2);color:var(--text2)}
 .sp2{display:inline-block;width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--mts2);border-radius:50%;animation:sp .8s linear infinite;margin-right:6px;vertical-align:middle}
 @keyframes sp{to{transform:rotate(360deg)}}
-.wb{background:#fff8e1;border:1px solid #ffe082;border-radius:3px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#e07b00}
+.wb{background:#fff4e8;border:1px solid #ffd4a6;border-radius:3px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#b45700}
 .perf-btn{background:#fff;border:1px solid var(--border2);color:var(--text2);padding:3px 10px;font-family:var(--fm);font-size:9px;cursor:pointer;border-radius:2px;transition:all .15s}
 .perf-btn:hover{color:var(--mts);border-color:var(--mts2)}.perf-btn.act{background:var(--mts);color:#fff;border-color:var(--mts)}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
@@ -89,27 +89,27 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
 <body>
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:12px">
-    <img src="centralion-logo.svg" alt="Centalion" height="36" style="object-fit:contain;display:block">
-    <div style="width:1px;height:28px;background:#dde8f2"></div>
+    <img src="https://centalion.com/wp-content/uploads/2026/09/Centalion_full_logo_landcape_Use_On_White_For_Event_Only_black-1024x169.png" alt="Centalion" height="30" style="object-fit:contain;display:block">
+    <div style="width:1px;height:28px;background:var(--border)"></div>
     <div>
-      <div style="font-size:12px;font-weight:600;color:#1a3a5c">Centalion <span style="color:#2e6ea6">Markets</span></div>
+      <div style="font-size:12px;font-weight:600;color:#171717">Centalion <span style="color:#ff8300">Markets</span></div>
       <div style="font-size:9px;color:#8a9ab0;letter-spacing:1.5px;text-transform:uppercase">Centalion Metals & FX Terminal · Geneva</div>
     </div>
-    <div style="background:#eaf3fb;border:1px solid #c0d8ee;color:#2e6ea6;font-size:9px;padding:2px 8px;border-radius:2px;font-weight:500;letter-spacing:1px;font-family:var(--fm)">LME OFFICIAL</div>
+    <div style="background:#fff4e8;border:1px solid #ffd4a6;color:#b45700;font-size:9px;padding:2px 8px;border-radius:2px;font-weight:500;letter-spacing:1px;font-family:var(--fm)">LME OFFICIAL</div>
   </div>
   <div class="tr">
     <span class="tb"><span class="ld w" id="ldot"></span><span id="llab" style="font-size:10px;font-weight:500">LOADING</span></span>
-    <div style="width:1px;height:14px;background:#dde8f2"></div>
+    <div style="width:1px;height:14px;background:var(--border)"></div>
     <span class="tb">Cu <span class="tbv" id="tb-cu">—</span></span>
     <span class="tb">Al <span class="tbv" id="tb-al">—</span></span>
     <span class="tb">Ni <span class="tbv" id="tb-ni">—</span></span>
-    <div style="width:1px;height:14px;background:#dde8f2"></div>
+    <div style="width:1px;height:14px;background:var(--border)"></div>
     <span class="tb">EUR/USD <span class="tbv" id="tb-fx">—</span></span>
     <span class="tb" id="tb-clk" style="color:#8a9ab0;font-family:var(--fm)">--:--:-- GENEVA</span>
   </div>
 </div>
 <div id="ds">
-  <span style="color:#1a3a5c;font-weight:500">Data:</span>
+  <span style="color:var(--mts);font-weight:500">Data:</span>
   <span>westmetall.com (LME) · Yahoo Finance (FX) · FRED · CFTC · Polymarket</span>
   <span>Last fetch: <span id="ds-last">—</span></span>
   <span>Next: <span id="ds-next">—</span></span>
@@ -1577,9 +1577,9 @@ window._doShowPage = _doShowPage;
 if(window._spPending) { _doShowPage(window._spPending); window._spPending=null; }
 
 </script>
-  <div style="background:#fff;border-top:1px solid #dde8f2;padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
+  <div style="background:#fff;border-top:1px solid var(--border);padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
     <div style="display:flex;align-items:center;gap:8px">
-      <img src="centralion-logo.svg" alt="Centalion" height="16" style="object-fit:contain;opacity:.75">
+      <img src="https://centalion.com/wp-content/uploads/2026/09/Centalion_full_logo_landcape_Use_On_White_For_Event_Only_black-1024x169.png" alt="Centalion" height="14" style="object-fit:contain;opacity:.8">
       <span style="color:#8a9ab0">Centalion Markets · Centalion Metals & FX Terminal · Geneva</span>
     </div>
     <span style="color:#b8cfe6;font-family:var(--fm)">westmetall.com · Yahoo Finance · FRED · CFTC · Polymarket</span>
