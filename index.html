@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script>function showPage(id){if(window._spReady){window._doShowPage(id);}else{window._spPending=id;}}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Centralion — Base Metals Terminal</title>
+<title>Centalion — Base Metals Terminal</title>
 <link rel="icon" href="data:,">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -89,11 +89,11 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
 <body>
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:12px">
-    <img src="centralion-logo.svg" alt="Centralion" height="36" style="object-fit:contain;display:block">
+    <img src="centralion-logo.svg" alt="Centalion" height="36" style="object-fit:contain;display:block">
     <div style="width:1px;height:28px;background:#dde8f2"></div>
     <div>
-      <div style="font-size:12px;font-weight:600;color:#1a3a5c">Centralion <span style="color:#2e6ea6">Markets</span></div>
-      <div style="font-size:9px;color:#8a9ab0;letter-spacing:1.5px;text-transform:uppercase">Centralion Metals & FX Terminal · Paris</div>
+      <div style="font-size:12px;font-weight:600;color:#1a3a5c">Centalion <span style="color:#2e6ea6">Markets</span></div>
+      <div style="font-size:9px;color:#8a9ab0;letter-spacing:1.5px;text-transform:uppercase">Centalion Metals & FX Terminal · Geneva</div>
     </div>
     <div style="background:#eaf3fb;border:1px solid #c0d8ee;color:#2e6ea6;font-size:9px;padding:2px 8px;border-radius:2px;font-weight:500;letter-spacing:1px;font-family:var(--fm)">LME OFFICIAL</div>
   </div>
@@ -105,7 +105,7 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
     <span class="tb">Ni <span class="tbv" id="tb-ni">—</span></span>
     <div style="width:1px;height:14px;background:#dde8f2"></div>
     <span class="tb">EUR/USD <span class="tbv" id="tb-fx">—</span></span>
-    <span class="tb" id="tb-clk" style="color:#8a9ab0;font-family:var(--fm)">--:--:-- PARIS</span>
+    <span class="tb" id="tb-clk" style="color:#8a9ab0;font-family:var(--fm)">--:--:-- GENEVA</span>
   </div>
 </div>
 <div id="ds">
@@ -521,7 +521,7 @@ async function fetchAll() {
       fetchOk = true;
       lastFetch = new Date();
       setSt('live');
-      document.getElementById('ds-last').textContent = fmtParisTime(lastFetch) + ' PARIS';
+      document.getElementById('ds-last').textContent = fmtGenevaTime(lastFetch) + ' GENEVA';
     } else {
       throw new Error('No quotes returned');
     }
@@ -547,7 +547,7 @@ const f2  = n => n == null || isNaN(n) ? '—' : n.toFixed(2);
 const f4  = n => n == null || isNaN(n) ? '—' : n.toFixed(4);
 const fp  = n => n == null || isNaN(n) ? '—' : (n > 0 ? '+' : '') + n.toFixed(2) + '%';
 const fc  = n => n == null ? 'neu' : n > 0 ? 'up' : n < 0 ? 'dn' : 'neu';
-const fmtParisTime = (d) => new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(d || new Date());
+const fmtGenevaTime = (d) => new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(d || new Date());
 
 function metalPrice(k) {
   const d = D[METALS[k].ticker];
@@ -588,7 +588,7 @@ function setSt(s) {
 // CLOCK & AUTO-REFRESH
 // ═══════════════════════════════════════════════
 setInterval(() => {
-  document.getElementById('tb-clk').textContent = fmtParisTime(new Date()) + ' PARIS';
+  document.getElementById('tb-clk').textContent = fmtGenevaTime(new Date()) + ' GENEVA';
   countdown--;
   if (countdown <= 0) { countdown = 60; fetchAll(); }
   document.getElementById('ds-next').textContent = countdown + 's';
@@ -668,7 +668,7 @@ function updOvKpis() {
 }
 
 function updOvTable() {
-  document.getElementById('ov-stamp').textContent = lastFetch ? fmtParisTime(lastFetch) + ' PARIS' : '—';
+  document.getElementById('ov-stamp').textContent = lastFetch ? fmtGenevaTime(lastFetch) + ' GENEVA' : '—';
   let h = '';
   Object.entries(METALS).forEach(([k,m]) => {
     const p = metalPrice(k); const d = metalData(k);
@@ -734,7 +734,7 @@ function drawOvBars() {
 // SPOT PAGE
 // ═══════════════════════════════════════════════
 function buildSpot() {
-  document.getElementById('sp-stamp').textContent = lastFetch ? fmtParisTime(lastFetch) + ' PARIS' : '—';
+  document.getElementById('sp-stamp').textContent = lastFetch ? fmtGenevaTime(lastFetch) + ' GENEVA' : '—';
   let h = '';
   Object.entries(METALS).forEach(([k,m]) => {
     const d = metalData(k); const p = metalPrice(k);
@@ -915,7 +915,7 @@ function drawTheta(F,T,r,s,legs){const cv=document.getElementById('tht-cv');if(!
 // FX PAGE
 // ═══════════════════════════════════════════════
 function buildFX() {
-  document.getElementById('fx-stamp').textContent = lastFetch ? fmtParisTime(lastFetch) + ' PARIS' : '—';
+  document.getElementById('fx-stamp').textContent = lastFetch ? fmtGenevaTime(lastFetch) + ' GENEVA' : '—';
 
   document.getElementById('fx-kpis').innerHTML = FX_PAIRS.slice(0,4).map(f => {
     const d = fxData(f.pair);
@@ -1305,7 +1305,7 @@ function tsCurveFactors(k){
 }
 
 function buildTS(){
-  document.getElementById('ts-stamp').textContent=lastFetch?fmtParisTime(lastFetch)+' PARIS':'—';
+  document.getElementById('ts-stamp').textContent=lastFetch?fmtGenevaTime(lastFetch)+' GENEVA':'—';
   let html='';
   const tsDebugRows=[];
   const dataMode = 'blended';
@@ -1579,8 +1579,8 @@ if(window._spPending) { _doShowPage(window._spPending); window._spPending=null; 
 </script>
   <div style="background:#fff;border-top:1px solid #dde8f2;padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
     <div style="display:flex;align-items:center;gap:8px">
-      <img src="centralion-logo.svg" alt="Centralion" height="16" style="object-fit:contain;opacity:.75">
-      <span style="color:#8a9ab0">Centralion Markets · Centralion Metals & FX Terminal · Paris</span>
+      <img src="centralion-logo.svg" alt="Centalion" height="16" style="object-fit:contain;opacity:.75">
+      <span style="color:#8a9ab0">Centalion Markets · Centalion Metals & FX Terminal · Geneva</span>
     </div>
     <span style="color:#b8cfe6;font-family:var(--fm)">westmetall.com · Yahoo Finance · FRED · CFTC · Polymarket</span>
   </div>
