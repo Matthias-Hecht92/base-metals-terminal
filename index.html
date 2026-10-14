@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script>function showPage(id){if(window._spReady){window._doShowPage(id);}else{window._spPending=id;}}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Metal Trading SAS — Base Metals Terminal</title>
+<title>Centralion — Base Metals Terminal</title>
 <link rel="icon" href="data:,">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -92,8 +92,8 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
     <img src="logo.jpeg" height="36" style="object-fit:contain;display:block">
     <div style="width:1px;height:28px;background:#dde8f2"></div>
     <div>
-      <div style="font-size:12px;font-weight:600;color:#1a3a5c">Metal Trading <span style="color:#2e6ea6">SAS</span></div>
-      <div style="font-size:9px;color:#8a9ab0;letter-spacing:1.5px;text-transform:uppercase">Base Metals & FX Terminal · Paris</div>
+      <div style="font-size:12px;font-weight:600;color:#1a3a5c">Centralion <span style="color:#2e6ea6">Markets</span></div>
+      <div style="font-size:9px;color:#8a9ab0;letter-spacing:1.5px;text-transform:uppercase">Centralion Metals & FX Terminal · Paris</div>
     </div>
     <div style="background:#eaf3fb;border:1px solid #c0d8ee;color:#2e6ea6;font-size:9px;padding:2px 8px;border-radius:2px;font-weight:500;letter-spacing:1px;font-family:var(--fm)">LME OFFICIAL</div>
   </div>
@@ -315,10 +315,10 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
           <div class="pb tw"><table><thead><tr><th>INDICATOR</th><th>VALUE</th><th>PREV</th><th>IMPACT</th></tr></thead><tbody id="mac-tbl"></tbody></table></div>
         </div>
         <div class="pn"><div class="ph"><span class="pt">Central Banks</span></div>
-          <div class="pb tw"><table><thead><tr><th>CB</th><th>RATE</th><th>CPI</th><th>NEXT MTG</th><th>EXPECTED</th><th>IMPACT</th></tr></thead><tbody id="cb-tbl"></tbody></table></div>
+          <div class="pb tw"><table><thead><tr><th>CB</th><th>RATE</th><th>CPI</th><th>NEXT MTG</th><th>SOURCE/DATE</th><th>IMPACT</th></tr></thead><tbody id="cb-tbl"></tbody></table></div>
         </div>
       </div>
-      <div class="pn"><div class="ph"><span class="pt">Event Calendar</span></div>
+      <div class="pn"><div class="ph"><span class="pt">Macro Release Monitor (Live)</span></div>
         <div class="pb tw"><table><thead><tr><th>DATE</th><th>EVENT</th><th>IMPACT</th><th>METAL</th><th>CONSENSUS</th><th>PREV</th></tr></thead><tbody id="ev-tbl"></tbody></table></div>
       </div>
       <div class="pn" style="margin-top:12px">
@@ -332,7 +332,7 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
       <div class="sh"><div class="st">News Feed</div><div class="ss">BASE METALS • FX • MACRO</div></div>
       <div class="g2">
         <div class="pn"><div class="ph"><span class="pt">Latest Headlines</span><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select id="news-filter" style="width:120px;font-size:10px" onchange="setNewsFilter(this.value)"><option value="all">All</option><option value="metals">Metals</option><option value="fx">FX</option><option value="macro">Macro</option><option value="supply">Supply Risk</option></select><input id="news-q" type="text" placeholder="Search..." style="width:150px;font-size:10px" oninput="setNewsQuery(this.value)"></div></div><div class="pb"><div id="nf"></div></div></div>
-        <div class="pn"><div class="ph"><span class="pt">Polymarket — Macro Predictions</span><span class="pk">gamma-api.polymarket.com</span></div><div class="pb"><div id="poly-feed"><span class="sp2"></span>Loading…</div></div></div>
+        <div class="pn"><div class="ph"><span class="pt">Market Intelligence (Headline-Linked)</span><span class="pk" id="poly-source">loading…</span></div><div class="pb"><div id="poly-feed"><span class="sp2"></span>Loading…</div></div></div>
       </div>
     </div>
 
@@ -391,7 +391,7 @@ let FX_FIRST_RENDER_LOGGED = false;
 // ═══════════════════════════════════════════════
 async function fetchYahoo(tickers) {
   const fields = 'regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketOpen,regularMarketDayHigh,regularMarketDayLow,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketState,shortName';
-  const url = `https://base-metals-terminal.vercel.app/api/quote?symbols=${tickers.join(',')}`;
+  const url = `/api/quote?symbols=${tickers.join(',')}`;
 
   const resp = await fetch(url, {
     method: 'GET',
@@ -454,7 +454,7 @@ async function ensureFxDailyPrev() {
   const loaded = await Promise.allSettled(missing.map(async (ticker) => {
     let pts = [];
     for (const range of ['1mo', '3mo']) {
-      const r = await fetch(`https://base-metals-terminal.vercel.app/api/quote?symbols=${encodeURIComponent(ticker)}&history=true&range=${range}&interval=1d`, {signal: AbortSignal.timeout(12000)});
+      const r = await fetch(`/api/quote?symbols=${encodeURIComponent(ticker)}&history=true&range=${range}&interval=1d`, {signal: AbortSignal.timeout(12000)});
       const j = await r.json();
       pts = j?.history || [];
       if (pts.length >= 2) break;
@@ -1005,14 +1005,14 @@ function calcH() {
 }
 
 // ═══════════════════════════════════════════════
-// MACRO — sourced from real scheduled events, no invented numbers
+// MACRO — sourced from FRED/CFTC/BIS APIs
 // ═══════════════════════════════════════════════
 function buildMacro() {
   // ── CB Rates via FRED proxy ───────────────────────────────────────────
   const cbIds = [
-    {id:'DFEDTARU', label:'Fed (upper bound)',  sfx:'%', next:'Jun 17 2026', cpiId:'CPIAUCSL', cpiYoy:true},
-    {id:'ECBDFR',   label:'ECB (deposit rate)', sfx:'%', next:'Jun 12 2026', cpiId:'CP0000EZ19M086NEST', cpiYoy:false},
-    {id:'IR3TIB01AUM156N', label:'RBA (cash rate)', sfx:'%', next:'Jul 1 2026', cpiId:'FPCPITOTLZGAUS', cpiYoy:false},
+    {id:'DFEDTARU', label:'Fed (upper bound)',  sfx:'%', next:'Official calendar', cpiId:'CPIAUCSL', cpiYoy:true},
+    {id:'ECBDFR',   label:'ECB (deposit rate)', sfx:'%', next:'Official calendar', cpiId:'CP0000EZ19M086NEST', cpiYoy:false},
+    {id:'IR3TIB01AUM156N', label:'RBA (cash rate)', sfx:'%', next:'Official calendar', cpiId:'FPCPITOTLZGAUS', cpiYoy:false},
   ];
   const monthsSince = (isoDate) => {
     if (!isoDate || isoDate === '—') return null;
@@ -1023,8 +1023,8 @@ function buildMacro() {
   Promise.all(cbIds.map(async s => {
     try {
       const [rateRes, cpiRes] = await Promise.all([
-        fetch('https://base-metals-terminal.vercel.app/api/quote?fred='+s.id, {signal:AbortSignal.timeout(15000)}).then(r=>r.json()),
-        fetch('https://base-metals-terminal.vercel.app/api/quote?fred='+s.cpiId+'&yoy='+(s.cpiYoy?'1':'0'), {signal:AbortSignal.timeout(15000)}).then(r=>r.json()),
+        fetch('/api/quote?fred='+s.id, {signal:AbortSignal.timeout(15000)}).then(r=>r.json()),
+        fetch('/api/quote?fred='+s.cpiId+'&yoy='+(s.cpiYoy?'1':'0'), {signal:AbortSignal.timeout(15000)}).then(r=>r.json()),
       ]);
       const rate = rateRes?.value!=null && isFinite(rateRes.value) ? rateRes.value.toFixed(2)+s.sfx : '—';
       const cpi = cpiRes?.value!=null && isFinite(cpiRes.value) ? cpiRes.value.toFixed(2)+'%' : '—';
@@ -1037,16 +1037,16 @@ function buildMacro() {
     }
   })).then(rows => {
     Promise.all([
-      fetch('https://base-metals-terminal.vercel.app/api/quote?pboc=true',{signal:AbortSignal.timeout(8000)}).then(r=>r.json()).catch(()=>({pboc:null})),
-      fetch('https://base-metals-terminal.vercel.app/api/quote?fred=FPCPITOTLZGCHN',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).catch(()=>({value:null})),
-      fetch('https://base-metals-terminal.vercel.app/api/quote?fred=IR3TIB01CNM156N',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).catch(()=>({value:null,date:null})),
+      fetch('/api/quote?pboc=true',{signal:AbortSignal.timeout(8000)}).then(r=>r.json()).catch(()=>({pboc:null})),
+      fetch('/api/quote?fred=FPCPITOTLZGCHN',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).catch(()=>({value:null})),
+      fetch('/api/quote?fred=IR3TIB01CNM156N',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).catch(()=>({value:null,date:null})),
     ]).then(([pboc, chinaCpi, pbocFallback])=>{
       const cnCpi = chinaCpi?.value!=null && isFinite(chinaCpi.value) ? chinaCpi.value.toFixed(2)+'%' : '—';
       const pbocMain = pboc?.pboc!=null && isFinite(parseFloat(pboc.pboc)) ? parseFloat(pboc.pboc) : null;
       const pbocFb = pbocFallback?.value!=null && isFinite(pbocFallback.value) ? pbocFallback.value : null;
       const pbocRate = pbocMain!=null ? pbocMain : pbocFb;
       const pbocDate = pbocMain!=null ? '' : (pbocFallback?.date || '');
-      rows.push({label:'PBOC (1Y LPR)',rate:pbocRate!=null?pbocRate.toFixed(2)+'%':'—',cpi:cnCpi,next:'Jun 20 2026',imp:'China easing signal',date:pbocDate,pbocFallbackUsed:pbocMain==null&&pbocFb!=null});
+      rows.push({label:'PBOC (1Y LPR)',rate:pbocRate!=null?pbocRate.toFixed(2)+'%':'—',cpi:cnCpi,next:'Official calendar',imp:'China easing signal',date:pbocDate,pbocFallbackUsed:pbocMain==null&&pbocFb!=null});
     })
       .finally(()=>{
         const stale = rows.filter(r => {
@@ -1096,7 +1096,7 @@ function buildMacro() {
   };
 
   Promise.all(fredIds.map(s=>
-    fetch('https://base-metals-terminal.vercel.app/api/quote?fred='+s.id+'&yoy='+(s.yoy?'1':'0'), {signal:AbortSignal.timeout(15000)})
+    fetch('/api/quote?fred='+s.id+'&yoy='+(s.yoy?'1':'0'), {signal:AbortSignal.timeout(15000)})
       .then(r=>r.json())
       .then(d=>({
         label:s.label,
@@ -1123,22 +1123,30 @@ function buildMacro() {
     }).join('');
   });
 
-  // Event calendar
-  const events=[
-    ['Jun 12 2026','ECB rate decision','HIGH','EUR/USD → metals','Hold 92%','2.00%'],
-    ['Jun 17 2026','FOMC rate decision','HIGH','DXY → all metals','Hold','3.50–3.75%'],
-    ['Jun 19 2026','BoE rate decision','MED','GBP/USD','Hold','4.25%'],
-    ['Jun 20 2026','PBOC LPR','MED','CNY → metals','Hold','3.00%'],
-    ['Jul 1 2026','RBA rate decision','MED','AUD/USD','Hold','3.60%'],
-  ];
-  // #region agent log
-  fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H2',location:'index.html:1043',message:'macro event calendar source',data:{source:'static_array',count:events.length},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
+  // Live macro release monitor (built from latest fetched macro and CB data)
   const evEl=document.getElementById('ev-tbl');
-  if(evEl) evEl.innerHTML=events.map(([d,e,i,m,c,p])=>
-    `<tr><td class="am">${d}</td><td>${e}</td><td class="${i==='HIGH'?'dn':'am'}">${i}</td>
-     <td style="color:var(--mts2)">${m}</td><td>${c}</td><td class="neu">${p}</td></tr>`
-  ).join('');
+  if(evEl){
+    const cbRows = rows.map(r => {
+      const impact = /Fed|ECB|PBOC/.test(r.label) ? 'HIGH' : 'MED';
+      const channel = r.label.includes('Fed') ? 'DXY \u2192 all metals'
+        : r.label.includes('ECB') ? 'EUR/USD \u2192 metals'
+        : r.label.includes('PBOC') ? 'CNY \u2192 metals'
+        : r.label.includes('RBA') ? 'AUD/USD \u2192 metals'
+        : 'Rates \u2192 metals';
+      return [
+        r.date || '\u2014',
+        `${r.label} latest release`,
+        impact,
+        channel,
+        r.cpi !== '\u2014' ? `CPI ${r.cpi}` : '\u2014',
+        r.rate || '\u2014',
+      ];
+    });
+    evEl.innerHTML = cbRows.map(([d,e,i,m,c,p]) =>
+      `<tr><td class="am">${d}</td><td>${e}</td><td class="${i==='HIGH'?'dn':'am'}">${i}</td>
+       <td style="color:var(--mts2)">${m}</td><td>${c}</td><td class="neu">${p}</td></tr>`
+    ).join('');
+  }
 
   buildCOT();
 }
@@ -1235,7 +1243,7 @@ function renderNewsFeed(){
 async function buildNews() {
   // Fetch live news via proxy
   try {
-    const r = await fetch('https://base-metals-terminal.vercel.app/api/quote?news=true',{signal:AbortSignal.timeout(15000)});
+    const r = await fetch('/api/quote?news=true',{signal:AbortSignal.timeout(15000)});
     const d = await r.json(); const items = d.news||[];
     setNewsItems(items);
   } catch(e) {
@@ -1380,41 +1388,9 @@ function drawTS(){
 // ═══ COT CFTC ═══
 async function buildCOT(){
   try{
-    const contracts = [
-      { code:'085692', name:'Copper (COMEX)', col:'#f0a020' },
-      { code:'088691', name:'Gold (COMEX)',   col:'#ffd700' },
-    ];
-    const rows = [];
-    for (const c of contracts) {
-      const url =
-        'https://publicreporting.cftc.gov/resource/6dca-aqww.json' +
-        '?%24select=report_date_as_yyyy_mm_dd%2Cnoncomm_positions_long_all%2Cnoncomm_positions_short_all' +
-        `&%24where=cftc_contract_market_code%20%3D%20%27${c.code}%27` +
-        '&%24order=report_date_as_yyyy_mm_dd%20DESC' +
-        '&%24limit=2';
-      try{
-        const rr = await fetch(url,{signal:AbortSignal.timeout(12000)});
-        const arr = await rr.json();
-        if(!Array.isArray(arr) || !arr.length) continue;
-        const latest = arr[0];
-        const prev = arr[1] || arr[0];
-        const longL = parseInt(latest.noncomm_positions_long_all || 0);
-        const shortL = parseInt(latest.noncomm_positions_short_all || 0);
-        const longP = parseInt(prev.noncomm_positions_long_all || 0);
-        const shortP = parseInt(prev.noncomm_positions_short_all || 0);
-        const net = longL - shortL;
-        const netP = longP - shortP;
-        rows.push({
-          ...c,
-          longL, shortL, net,
-          chg: net - netP,
-          date: (latest.report_date_as_yyyy_mm_dd || '—').split('T')[0],
-        });
-      }catch(_e){}
-    }
-    // #region agent log
-    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H3',location:'index.html:1225',message:'cot rows fetched',data:{count:rows.length,firstDate:rows[0]?.date||null},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+    const rr = await fetch('/api/quote?cot=true',{signal:AbortSignal.timeout(15000)});
+    const data = await rr.json();
+    const rows = Array.isArray(data?.cot) ? data.cot : [];
     if(!rows.length) throw new Error('No data');
     document.getElementById('cot-stamp').textContent='CFTC — '+(rows[0]?.date||'—');
     document.getElementById('cot-tbl').innerHTML=rows.map(r2=>`<tr>
@@ -1426,9 +1402,6 @@ async function buildCOT(){
       <td><span class="sg ${r2.net>0?'slo':'ssh'}">${r2.net>0?'NET LONG':'NET SHORT'}</span></td>
     </tr>`).join('');
   }catch(e){
-    // #region agent log
-    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H3',location:'index.html:1237',message:'cot fetch failed',data:{error:e?.message||'unknown'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     document.getElementById('cot-tbl').innerHTML=`<tr><td colspan="6" class="neu">CFTC unavailable: ${e.message}</td></tr>`;
   }
 }
@@ -1436,7 +1409,7 @@ async function buildCOT(){
 // ═══ NEWS via Vercel proxy ═══
 async function buildNewsLive(){
   try{
-    const r=await fetch('https://base-metals-terminal.vercel.app/api/quote?news=true',{signal:AbortSignal.timeout(12000)});
+    const r=await fetch('/api/quote?news=true',{signal:AbortSignal.timeout(12000)});
     const d=await r.json(); const items=d.news||[];
     // #region agent log
     fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H4',location:'index.html:1245',message:'news feed rows fetched',data:{count:items.length},timestamp:Date.now()})}).catch(()=>{});
@@ -1447,9 +1420,11 @@ async function buildNewsLive(){
 
 // ═══ POLYMARKET ═══
 async function buildPolymarket(){
+  const srcEl = document.getElementById('poly-source');
   try{
-    const r=await fetch('https://gamma-api.polymarket.com/markets?active=true&limit=120&order=volume24hr&ascending=false',{signal:AbortSignal.timeout(9000)});
+    const r=await fetch('/api/quote?polymarket=true&limit=120',{signal:AbortSignal.timeout(12000)});
     const markets=await r.json(); if(!markets?.length) throw new Error('No markets');
+    if(srcEl) srcEl.textContent='Polymarket API (proxied)';
     const kws = polymarketKeywordsFromHeadlines();
     const rel = markets
       .map(m => ({ m, score: polymarketRelevanceScore(m.question, kws) }))
@@ -1457,11 +1432,9 @@ async function buildPolymarket(){
       .sort((a,b) => b.score - a.score)
       .map(x => x.m);
     const display=rel.slice(0,8);
-    // #region agent log
-    fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H5',location:'index.html:1263',message:'polymarket rows filtered',data:{total:markets.length,relevant:rel.length,display:display.length,kwCount:kws.length},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if(!display.length){
-      document.getElementById('poly-feed').innerHTML=`<div style="color:#8a9ab0;font-size:11px">No prediction market currently matches visible headlines</div>`;
+      if(srcEl) srcEl.textContent='Fallback intelligence';
+      buildAltIntel('No relevant market matched live headlines');
       return;
     }
     document.getElementById('poly-feed').innerHTML=display.map(m=>{
@@ -1477,17 +1450,38 @@ async function buildPolymarket(){
         <div style="font-size:11px;color:var(--text);line-height:1.3">${m.question}</div>
       </div>`;
     }).join('');
-  }catch(e){document.getElementById('poly-feed').innerHTML=`<div style="color:#8a9ab0;font-size:11px">Polymarket unavailable</div>`;}
+  }catch(e){
+    buildAltIntel('Polymarket API unavailable');
+    if(srcEl) srcEl.textContent='Fallback intelligence';
+  }
 }
 
-// ═══ WRAP buildMacro to also call COT ═══
-const _buildMacroOrig = buildMacro;
-buildMacro = function(){ _buildMacroOrig(); buildCOT(); };
-
-// ═══ WRAP buildNews to also try live + polymarket ═══
-const _buildNewsOrig = buildNews;
-buildNews = async function(){ _buildNewsOrig(); await buildNewsLive(); buildPolymarket(); };
-
+function buildAltIntel(reason){
+  const bucketCount = NEWS_RAW.reduce((acc, n) => {
+    const k = n.bucket || 'metals';
+    acc[k] = (acc[k] || 0) + 1;
+    return acc;
+  }, {});
+  const topBucket = Object.entries(bucketCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || 'metals';
+  const move = (label, v) => `<div style="display:flex;justify-content:space-between"><span style="color:#8a9ab0">${label}</span><span class="${v>=0?'up':'dn'}">${v>=0?'+':''}${v.toFixed(2)}%</span></div>`;
+  const cu = metalData('Cu')?.pct;
+  const ni = metalData('Ni')?.pct;
+  const eurusd = fxData('EUR/USD')?.pct;
+  const usdcny = fxData('USD/CNY')?.pct;
+  const latest = currentNewsItems().slice(0,3).map(n => `<li style="margin-bottom:4px">${n.title}</li>`).join('');
+  const html = `
+    <div style="font-size:11px;color:#8a9ab0;margin-bottom:8px">${reason}</div>
+    <div style="font-size:11px;color:var(--text);margin-bottom:8px"><b>Headline pulse:</b> ${topBucket.toUpperCase()} dominant (${bucketCount[topBucket]||0} headlines)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;margin-bottom:8px">
+      ${cu!=null ? move('Copper daily move', cu) : ''}
+      ${ni!=null ? move('Nickel daily move', ni) : ''}
+      ${eurusd!=null ? move('EUR/USD daily move', eurusd) : ''}
+      ${usdcny!=null ? move('USD/CNY daily move', usdcny) : ''}
+    </div>
+    ${latest ? `<div style="font-size:11px;color:var(--text2);margin-top:6px"><b>Top linked headlines</b><ul style="margin:6px 0 0 16px;padding:0">${latest}</ul></div>` : '<div style="font-size:11px;color:#8a9ab0">No linked headlines available yet.</div>'}
+  `;
+  document.getElementById('poly-feed').innerHTML = html;
+}
 
 // Historical chart for Spot & Futures page
 var hp2Period = '1y';
@@ -1513,7 +1507,7 @@ async function hp2Load() {
   let pts = _hp2Cache[key];
   if(!pts) {
     try {
-      const r = await fetch(`https://base-metals-terminal.vercel.app/api/quote?symbols=${encodeURIComponent(sym)}&history=true&range=${rng}&interval=${itv}`,{signal:AbortSignal.timeout(20000)});
+      const r = await fetch(`/api/quote?symbols=${encodeURIComponent(sym)}&history=true&range=${rng}&interval=${itv}`,{signal:AbortSignal.timeout(20000)});
       const d = await r.json(); pts = d.history||[];
       if(pts.length>2) _hp2Cache[key]=pts;
     } catch(e) { msgEl.innerHTML='<span style="color:#c62828">Unavailable</span>'; return; }
@@ -1586,7 +1580,7 @@ if(window._spPending) { _doShowPage(window._spPending); window._spPending=null; 
   <div style="background:#fff;border-top:1px solid #dde8f2;padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
     <div style="display:flex;align-items:center;gap:8px">
       <img src="logo.jpeg" height="16" style="object-fit:contain;opacity:.5">
-      <span style="color:#8a9ab0">Metal Trading SAS · Base Metals & FX Terminal · Paris</span>
+      <span style="color:#8a9ab0">Centralion Markets · Centralion Metals & FX Terminal · Paris</span>
     </div>
     <span style="color:#b8cfe6;font-family:var(--fm)">westmetall.com · Yahoo Finance · FRED · CFTC · Polymarket</span>
   </div>

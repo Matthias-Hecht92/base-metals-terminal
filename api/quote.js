@@ -1,4 +1,4 @@
-// Proxy Vercel — base-metals-terminal
+// Proxy Vercel — centralion-metals-terminal
 // Métaux : westmetall.com (LME officiel)
 // FX     : Yahoo Finance chart API
 // COT    : CFTC publicreporting.cftc.gov (bon endpoint)
@@ -192,7 +192,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { symbols, history, range, interval, pboc, cot, news } = req.query;
+  const { symbols, history, range, interval, pboc, cot, news, polymarket, limit } = req.query;
 
   // ── PBOC rate ─────────────────────────────────────────────────
   if (pboc === 'true') {
@@ -221,6 +221,21 @@ export default async function handler(req, res) {
   if (news === 'true') {
     const data = await fetchNews();
     return res.status(200).json({ news: data });
+  }
+
+  // ── Polymarket proxy (avoids browser-side blocks) ─────────────────────────
+  if (polymarket === 'true') {
+    try {
+      const lim = Math.max(20, Math.min(parseInt(limit || '120', 10) || 120, 250));
+      const r = await fetch(`https://gamma-api.polymarket.com/markets?active=true&limit=${lim}&order=volume24hr&ascending=false`, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(12000)
+      });
+      const data = await r.json();
+      return res.status(200).json(Array.isArray(data) ? data : []);
+    } catch (e) {
+      return res.status(200).json([]);
+    }
   }
 
 
