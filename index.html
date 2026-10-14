@@ -89,7 +89,7 @@ canvas{display:block;width:100%;background:#fff;border-radius:3px}
 <body>
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:12px">
-    <img src="logo.jpeg" height="36" style="object-fit:contain;display:block">
+    <img src="centralion-logo.svg" alt="Centralion" height="36" style="object-fit:contain;display:block">
     <div style="width:1px;height:28px;background:#dde8f2"></div>
     <div>
       <div style="font-size:12px;font-weight:600;color:#1a3a5c">Centralion <span style="color:#2e6ea6">Markets</span></div>
@@ -384,25 +384,32 @@ let fetchOk = false;
 let countdown = 60;
 let FX_DAY_PREV = {}; // previous daily close by FX ticker
 let FX_FIRST_RENDER_LOGGED = false;
+const API_QUOTE_ENDPOINTS = ['/api/quote', 'https://base-metals-terminal.vercel.app/api/quote'];
+
+async function fetchQuoteJson(query, timeoutMs = 12000) {
+  let lastErr = null;
+  for (const base of API_QUOTE_ENDPOINTS) {
+    try {
+      const resp = await fetch(`${base}?${query}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return await resp.json();
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('Quote API unavailable');
+}
 
 // ═══════════════════════════════════════════════
 // YAHOO FINANCE FETCH
 // Uses query2 which has slightly more permissive CORS than query1
 // ═══════════════════════════════════════════════
 async function fetchYahoo(tickers) {
-  const fields = 'regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketOpen,regularMarketDayHigh,regularMarketDayLow,regularMarketPreviousClose,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketState,shortName';
-  const url = `/api/quote?symbols=${tickers.join(',')}`;
-
-  const resp = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-    },
-    signal: AbortSignal.timeout(8000)
-  });
-
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const json = await resp.json();
+  const json = await fetchQuoteJson('symbols=' + encodeURIComponent(tickers.join(',')), 8000);
   const quotes = json?.quoteResponse?.result || [];
   if (!quotes.length) throw new Error('Empty response');
 
@@ -454,8 +461,7 @@ async function ensureFxDailyPrev() {
   const loaded = await Promise.allSettled(missing.map(async (ticker) => {
     let pts = [];
     for (const range of ['1mo', '3mo']) {
-      const r = await fetch(`/api/quote?symbols=${encodeURIComponent(ticker)}&history=true&range=${range}&interval=1d`, {signal: AbortSignal.timeout(12000)});
-      const j = await r.json();
+      const j = await fetchQuoteJson(`symbols=${encodeURIComponent(ticker)}&history=true&range=${range}&interval=1d`, 12000);
       pts = j?.history || [];
       if (pts.length >= 2) break;
     }
@@ -1023,8 +1029,8 @@ function buildMacro() {
   Promise.all(cbIds.map(async s => {
     try {
       const [rateRes, cpiRes] = await Promise.all([
-        fetch('/api/quote?fred='+s.id, {signal:AbortSignal.timeout(15000)}).then(r=>r.json()),
-        fetch('/api/quote?fred='+s.cpiId+'&yoy='+(s.cpiYoy?'1':'0'), {signal:AbortSignal.timeout(15000)}).then(r=>r.json()),
+        fetchQuoteJson('fred=' + s.id, 15000),
+        fetchQuoteJson('fred=' + s.cpiId + '&yoy=' + (s.cpiYoy ? '1' : '0'), 15000),
       ]);
       const rate = rateRes?.value!=null && isFinite(rateRes.value) ? rateRes.value.toFixed(2)+s.sfx : '—';
       const cpi = cpiRes?.value!=null && isFinite(cpiRes.value) ? cpiRes.value.toFixed(2)+'%' : '—';
@@ -1037,9 +1043,9 @@ function buildMacro() {
     }
   })).then(rows => {
     Promise.all([
-      fetch('/api/quote?pboc=true',{signal:AbortSignal.timeout(8000)}).then(r=>r.json()).catch(()=>({pboc:null})),
-      fetch('/api/quote?fred=FPCPITOTLZGCHN',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).catch(()=>({value:null})),
-      fetch('/api/quote?fred=IR3TIB01CNM156N',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).catch(()=>({value:null,date:null})),
+      fetchQuoteJson('pboc=true', 8000).catch(()=>({pboc:null})),
+      fetchQuoteJson('fred=FPCPITOTLZGCHN', 15000).catch(()=>({value:null})),
+      fetchQuoteJson('fred=IR3TIB01CNM156N', 15000).catch(()=>({value:null,date:null})),
     ]).then(([pboc, chinaCpi, pbocFallback])=>{
       const cnCpi = chinaCpi?.value!=null && isFinite(chinaCpi.value) ? chinaCpi.value.toFixed(2)+'%' : '—';
       const pbocMain = pboc?.pboc!=null && isFinite(parseFloat(pboc.pboc)) ? parseFloat(pboc.pboc) : null;
@@ -1096,8 +1102,7 @@ function buildMacro() {
   };
 
   Promise.all(fredIds.map(s=>
-    fetch('/api/quote?fred='+s.id+'&yoy='+(s.yoy?'1':'0'), {signal:AbortSignal.timeout(15000)})
-      .then(r=>r.json())
+    fetchQuoteJson('fred=' + s.id + '&yoy=' + (s.yoy ? '1' : '0'), 15000)
       .then(d=>({
         label:s.label,
         value:d.value!=null&&isFinite(d.value)?d.value:null,
@@ -1243,8 +1248,7 @@ function renderNewsFeed(){
 async function buildNews() {
   // Fetch live news via proxy
   try {
-    const r = await fetch('/api/quote?news=true',{signal:AbortSignal.timeout(15000)});
-    const d = await r.json(); const items = d.news||[];
+    const d = await fetchQuoteJson('news=true', 15000); const items = d.news||[];
     setNewsItems(items);
   } catch(e) {
     setNewsItems([]);
@@ -1388,8 +1392,7 @@ function drawTS(){
 // ═══ COT CFTC ═══
 async function buildCOT(){
   try{
-    const rr = await fetch('/api/quote?cot=true',{signal:AbortSignal.timeout(15000)});
-    const data = await rr.json();
+    const data = await fetchQuoteJson('cot=true', 15000);
     const rows = Array.isArray(data?.cot) ? data.cot : [];
     if(!rows.length) throw new Error('No data');
     document.getElementById('cot-stamp').textContent='CFTC — '+(rows[0]?.date||'—');
@@ -1409,8 +1412,7 @@ async function buildCOT(){
 // ═══ NEWS via Vercel proxy ═══
 async function buildNewsLive(){
   try{
-    const r=await fetch('/api/quote?news=true',{signal:AbortSignal.timeout(12000)});
-    const d=await r.json(); const items=d.news||[];
+    const d=await fetchQuoteJson('news=true', 12000); const items=d.news||[];
     // #region agent log
     fetch('http://127.0.0.1:7375/ingest/56863a4b-3411-4780-a3c6-0eba6e03032f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'964872'},body:JSON.stringify({sessionId:'964872',runId:'macro-pre-fix',hypothesisId:'M-H4',location:'index.html:1245',message:'news feed rows fetched',data:{count:items.length},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
@@ -1422,8 +1424,7 @@ async function buildNewsLive(){
 async function buildPolymarket(){
   const srcEl = document.getElementById('poly-source');
   try{
-    const r=await fetch('/api/quote?polymarket=true&limit=120',{signal:AbortSignal.timeout(12000)});
-    const markets=await r.json(); if(!markets?.length) throw new Error('No markets');
+    const markets=await fetchQuoteJson('polymarket=true&limit=120', 12000); if(!markets?.length) throw new Error('No markets');
     if(srcEl) srcEl.textContent='Polymarket API (proxied)';
     const kws = polymarketKeywordsFromHeadlines();
     const rel = markets
@@ -1507,8 +1508,7 @@ async function hp2Load() {
   let pts = _hp2Cache[key];
   if(!pts) {
     try {
-      const r = await fetch(`/api/quote?symbols=${encodeURIComponent(sym)}&history=true&range=${rng}&interval=${itv}`,{signal:AbortSignal.timeout(20000)});
-      const d = await r.json(); pts = d.history||[];
+      const d = await fetchQuoteJson(`symbols=${encodeURIComponent(sym)}&history=true&range=${rng}&interval=${itv}`, 20000); pts = d.history||[];
       if(pts.length>2) _hp2Cache[key]=pts;
     } catch(e) { msgEl.innerHTML='<span style="color:#c62828">Unavailable</span>'; return; }
   }
@@ -1579,7 +1579,7 @@ if(window._spPending) { _doShowPage(window._spPending); window._spPending=null; 
 </script>
   <div style="background:#fff;border-top:1px solid #dde8f2;padding:5px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
     <div style="display:flex;align-items:center;gap:8px">
-      <img src="logo.jpeg" height="16" style="object-fit:contain;opacity:.5">
+      <img src="centralion-logo.svg" alt="Centralion" height="16" style="object-fit:contain;opacity:.75">
       <span style="color:#8a9ab0">Centralion Markets · Centralion Metals & FX Terminal · Paris</span>
     </div>
     <span style="color:#b8cfe6;font-family:var(--fm)">westmetall.com · Yahoo Finance · FRED · CFTC · Polymarket</span>
