@@ -2,7 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script>function showPage(id){if(window._spReady){window._doShowPage(id);}else{window._spPending=id;}}</script>
+<script>
+function showPage(id){
+  if (typeof window._doShowPage === 'function') {
+    window._doShowPage(id);
+    return;
+  }
+  // Fallback: keep tabs clickable even if full app init has not completed yet.
+  document.querySelectorAll('.pg').forEach(function(p){ p.classList.remove('act'); });
+  document.querySelectorAll('.nv').forEach(function(n){ n.classList.remove('act'); });
+  var pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('act');
+  var nv = document.getElementById('nv-' + id);
+  if (nv) nv.classList.add('act');
+  window._spPending = id;
+}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Centalion — Base Metals Terminal</title>
 <link rel="icon" href="data:,">
