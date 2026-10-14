@@ -594,6 +594,14 @@ setInterval(() => {
   document.getElementById('ds-next').textContent = countdown + 's';
 }, 1000);
 
+let bootRetryInFlight = false;
+setInterval(() => {
+  // If startup got interrupted and no successful fetch happened yet, retry automatically.
+  if (lastFetch || bootRetryInFlight) return;
+  bootRetryInFlight = true;
+  fetchAll().finally(() => { bootRetryInFlight = false; });
+}, 10000);
+
 function updateAll() {
   updTopbar();
   updSidebar();
@@ -1272,9 +1280,9 @@ function _doShowPage(id) {
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-buildMacro();
-buildNews();
-fetchAll();
+try { buildMacro(); } catch(_e) {}
+try { buildNews(); } catch(_e) {}
+setTimeout(() => { fetchAll(); }, 50);
 window.addEventListener('resize', () => {
   const id = document.querySelector('.pg.act')?.id.replace('page-', '');
   if (id) refPage(id);
